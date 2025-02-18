@@ -209,6 +209,8 @@ for (wave in waves) {
 }
 
 
+rm(number.children.living.inHH)
+
 
 
 # calculate the equivalized income for each wave
@@ -236,133 +238,122 @@ data <- data %>%
     as.numeric(chf.eur.exrates$nomx_value[find])
   }, .names = "chf.eur.exrate_{col}"))
 
+
+
+# Load the dataset with wave-specific thinc2 variables
+load(file = "data_wave-specific-thinc2.Rdata") 
+
+# Filter `thinc2_data` to only keep `mergeid` values that exist in `data`
+thinc2_filtered <- thinc2_data %>%
+  filter(mergeid %in% data$mergeid)
+
+# Merge only the relevant `thinc2` variables with `data`
+data <- data %>%
+  left_join(thinc2_filtered, by = "mergeid")
+
+
+
+
+
+
 # in the next step we transform into chf, adjust to monthly, and divide by equivalizing factor
-glimpse(data$hh1itot)
+glimpse(data$w2.thinc2)
 glimpse(data$household.equiv.weighting.factor.w1)
 glimpse(data$hh9)
 
-#setting up w1 where the variables are slightly different
+
+
+
+# Apply transformations for each wave (w2 to w9)
 data <- data %>%
   mutate(
-    yearly.thinc.eur.w1 = hh1itot,
-    yearly.thinc.chf.w1 = if_else(
-      is.na(hh1itot) | is.na(chf.eur.exrate_r1iwy),
-      NA,
-      hh1itot / chf.eur.exrate_r1iwy
-    ),
-    monthly.thinc.chf.w1 = if_else(is.na(yearly.thinc.chf.w1), NA, yearly.thinc.chf.w1 /
-                                     12),
-    equiv.hhinc.w1 = monthly.thinc.chf.w1 / household.equiv.weighting.factor.w1
-  )
-summary(data$equiv.hhinc.w1)
-
-
-# then setting up waves 4-9
-# note: i stumbled across a problem where the total houhosel income (hhWittot) is missing for w6-w9 for no reason (it exists in the regular waves)
-# therefore i use the other one-shot household income measure hhWitothhinc
-glimpse(data$hh2ittot)
-
-
-# For w2
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w2 = hh2itothhinc,
+    # Wave 2
+    yearly.thinc.eur.w2 = w2.thinc2,
     yearly.thinc.chf.w2 = if_else(
-      is.na(hh2itothhinc) | is.na(chf.eur.exrate_r2iwy),
+      is.na(w2.thinc2) | is.na(chf.eur.exrate_r2iwy),
       NA_real_,
-      hh2itothhinc / chf.eur.exrate_r2iwy
+      w2.thinc2 / chf.eur.exrate_r2iwy
     ),
-    monthly.thinc.chf.w2 = if_else(is.na(yearly.thinc.chf.w2), NA_real_, yearly.thinc.chf.w2 / 12),
-    equiv.hhinc.w2 = monthly.thinc.chf.w2 / household.equiv.weighting.factor.w2
-  )
-summary(data$equiv.hhinc.w4)
-
-
-# For w4
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w4 = hh4itothhinc,
+    monthly.thinc.chf.w2 = yearly.thinc.chf.w2 / 12,
+    equiv.hhinc.w2 = monthly.thinc.chf.w2 / household.equiv.weighting.factor.w2,
+    
+      # Wave 4
+    yearly.thinc.eur.w4 = w4.thinc2,
     yearly.thinc.chf.w4 = if_else(
-      is.na(hh4itothhinc) | is.na(chf.eur.exrate_r4iwy),
+      is.na(w4.thinc2) | is.na(chf.eur.exrate_r4iwy),
       NA_real_,
-      hh4itothhinc / chf.eur.exrate_r4iwy
+      w4.thinc2 / chf.eur.exrate_r4iwy
     ),
-    monthly.thinc.chf.w4 = if_else(is.na(yearly.thinc.chf.w4), NA_real_, yearly.thinc.chf.w4 / 12),
-    equiv.hhinc.w4 = monthly.thinc.chf.w4 / household.equiv.weighting.factor.w4
-  )
-summary(data$equiv.hhinc.w4)
-
-# For w5
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w5 = hh5itothhinc,
+    monthly.thinc.chf.w4 = yearly.thinc.chf.w4 / 12,
+    equiv.hhinc.w4 = monthly.thinc.chf.w4 / household.equiv.weighting.factor.w4,
+    
+    # Wave 5
+    yearly.thinc.eur.w5 = w5.thinc2,
     yearly.thinc.chf.w5 = if_else(
-      is.na(hh5itothhinc) | is.na(chf.eur.exrate_r5iwy),
+      is.na(w5.thinc2) | is.na(chf.eur.exrate_r5iwy),
       NA_real_,
-      hh5itothhinc / chf.eur.exrate_r5iwy
+      w5.thinc2 / chf.eur.exrate_r5iwy
     ),
-    monthly.thinc.chf.w5 = if_else(is.na(yearly.thinc.chf.w5), NA_real_, yearly.thinc.chf.w5 / 12),
-    equiv.hhinc.w5 = monthly.thinc.chf.w5 / household.equiv.weighting.factor.w5
-  )
-summary(data$equiv.hhinc.w5)
-
-# For w6
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w6 = hh6itothhinc,
+    monthly.thinc.chf.w5 = yearly.thinc.chf.w5 / 12,
+    equiv.hhinc.w5 = monthly.thinc.chf.w5 / household.equiv.weighting.factor.w5,
+    
+    # Wave 6
+    yearly.thinc.eur.w6 = w6.thinc2,
     yearly.thinc.chf.w6 = if_else(
-      is.na(hh6itothhinc) | is.na(chf.eur.exrate_r6iwy),
+      is.na(w6.thinc2) | is.na(chf.eur.exrate_r6iwy),
       NA_real_,
-      hh6itothhinc / chf.eur.exrate_r6iwy
+      w6.thinc2 / chf.eur.exrate_r6iwy
     ),
-    monthly.thinc.chf.w6 = if_else(is.na(yearly.thinc.chf.w6), NA_real_, yearly.thinc.chf.w6 / 12),
-    equiv.hhinc.w6 = monthly.thinc.chf.w6 / household.equiv.weighting.factor.w6
-  )
-summary(data$equiv.hhinc.w6)
-
-# For w7
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w7 = hh7itothhinc,
+    monthly.thinc.chf.w6 = yearly.thinc.chf.w6 / 12,
+    equiv.hhinc.w6 = monthly.thinc.chf.w6 / household.equiv.weighting.factor.w6,
+    
+    # Wave 7
+    yearly.thinc.eur.w7 = w7.thinc2,
     yearly.thinc.chf.w7 = if_else(
-      is.na(hh7itothhinc) | is.na(chf.eur.exrate_r7iwy),
+      is.na(w7.thinc2) | is.na(chf.eur.exrate_r7iwy),
       NA_real_,
-      hh7itothhinc / chf.eur.exrate_r7iwy
+      w7.thinc2 / chf.eur.exrate_r7iwy
     ),
-    monthly.thinc.chf.w7 = if_else(is.na(yearly.thinc.chf.w7), NA_real_, yearly.thinc.chf.w7 / 12),
-    equiv.hhinc.w7 = monthly.thinc.chf.w7 / household.equiv.weighting.factor.w7
-  )
-summary(data$equiv.hhinc.w7)
-
-# For w8
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w8 = hh8itothhinc,
+    monthly.thinc.chf.w7 = yearly.thinc.chf.w7 / 12,
+    equiv.hhinc.w7 = monthly.thinc.chf.w7 / household.equiv.weighting.factor.w7,
+    
+    # Wave 8
+    yearly.thinc.eur.w8 = w8.thinc2,
     yearly.thinc.chf.w8 = if_else(
-      is.na(hh8itothhinc) | is.na(chf.eur.exrate_r8iwy),
+      is.na(w8.thinc2) | is.na(chf.eur.exrate_r8iwy),
       NA_real_,
-      hh8itothhinc / chf.eur.exrate_r8iwy
+      w8.thinc2 / chf.eur.exrate_r8iwy
     ),
-    monthly.thinc.chf.w8 = if_else(is.na(yearly.thinc.chf.w8), NA_real_, yearly.thinc.chf.w8 / 12),
-    equiv.hhinc.w8 = monthly.thinc.chf.w8 / household.equiv.weighting.factor.w8
-  )
-summary(data$equiv.hhinc.w8)
-
-# For w9
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w9 = hh9itothhinc,
+    monthly.thinc.chf.w8 = yearly.thinc.chf.w8 / 12,
+    equiv.hhinc.w8 = monthly.thinc.chf.w8 / household.equiv.weighting.factor.w8,
+    
+    # Wave 9
+    yearly.thinc.eur.w9 = w9.thinc2,
     yearly.thinc.chf.w9 = if_else(
-      is.na(hh9itothhinc) | is.na(chf.eur.exrate_r9iwy),
+      is.na(w9.thinc2) | is.na(chf.eur.exrate_r9iwy),
       NA_real_,
-      hh9itothhinc / chf.eur.exrate_r9iwy
+      w9.thinc2 / chf.eur.exrate_r9iwy
     ),
-    monthly.thinc.chf.w9 = if_else(is.na(yearly.thinc.chf.w9), NA_real_, yearly.thinc.chf.w9 / 12),
+    monthly.thinc.chf.w9 = yearly.thinc.chf.w9 / 12,
     equiv.hhinc.w9 = monthly.thinc.chf.w9 / household.equiv.weighting.factor.w9
   )
+
+# Display summaries
+summary(data$equiv.hhinc.w2)
+summary(data$equiv.hhinc.w3)
+summary(data$equiv.hhinc.w4)
+summary(data$equiv.hhinc.w5)
+summary(data$equiv.hhinc.w6)
+summary(data$equiv.hhinc.w7)
+summary(data$equiv.hhinc.w8)
 summary(data$equiv.hhinc.w9)
 
-# at this point we have equivalized household incomes for each wave 
+
+
+
+
+
+# at this point we have equivalized monthly household incomes for each wave for each respondent
 
 # now we transform the equivalized household income to poverty indicators 
 # note, since the variable which i've now used as hhincome is not available for w1 and is not comparable, i do the sequences only for w2-9 ( skipping 3 because it is missing)

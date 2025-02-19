@@ -23,7 +23,6 @@ data <- data %>%
     age.w4 = r4iwy - rabyear,
     age.w5 = r5iwy - rabyear,
     age.w6 = r6iwy - rabyear,
-    age.w7 = r7iwy - rabyear,
     age.w8 = r8iwy - rabyear,
     age.w9 = r9iwy - rabyear, 
     age.end.observation = 2022 - rabyear
@@ -31,40 +30,85 @@ data <- data %>%
 
 table(data$age.end.observation)
 
-tse_data <- data %>%
-  pivot_longer(
-    cols = c("joint.income.wealth.poverty.bn.wpoverty.bn.w2",
-             "joint.income.wealth.poverty.bn.wpoverty.bn.w4",
-             "joint.income.wealth.poverty.bn.wpoverty.bn.w5",
-             "joint.income.wealth.poverty.bn.wpoverty.bn.w6",
-             "joint.income.wealth.poverty.bn.wpoverty.bn.w7",
-             "joint.income.wealth.poverty.bn.wpoverty.bn.w8",
-             "joint.income.wealth.poverty.bn.wpoverty.bn.w9",
-             "age.w2", "age.w4", "age.w5", "age.w6", "age.w7", "age.w8", "age.w9"),
-    names_to = c(".value", "wave"),
-    names_pattern = "(.*)\\.w([2-9])"
-  ) %>%
+# Transform data to long format
+
+# Libraries ---------------------------------------------------------------
+# 
+# install.packages("TraMineR")
+# install.packages("TraMineRextras")
+
+library(tidyverse)
+library(TraMineR)
+library(TraMineRextras)
+
+
+# Clear everything  -------------------------------------------------------
+
+rm(list = ls())
+load(file="data_step3-out-variables-all-setup.Rdata")
+
+# creating variables as a basis to create a TSE frame ---------------------
+
+#calculate an 
+data <- data %>%
   mutate(
-    wave = as.integer(wave) # Convert wave to numeric for proper ordering
+    age.w1 = r1iwy - rabyear,
+    age.w2 = r2iwy - rabyear,
+    age.w4 = r4iwy - rabyear,
+    age.w5 = r5iwy - rabyear,
+    age.w6 = r6iwy - rabyear,
+    age.w8 = r8iwy - rabyear,
+    age.w9 = r9iwy - rabyear, 
+    age.end.observation = 2022 - rabyear
+  )
+
+table(data$age.end.observation)
+
+# Transform data to long format
+
+
+# Transform age variables to long format
+age_data <- data %>%
+  select(mergeid, starts_with("age.w")) %>%
+  pivot_longer(
+    cols = -mergeid,
+    names_to = "wave",
+    names_prefix = "age.w",
+    values_to = "age"
   ) %>%
-  select(mergeid, wave, poverty = joint.income.wealth.poverty.bn.wpoverty.bn, age) # Keep ID, wave, and relevant variables
+  mutate(wave = as.integer(wave))
 
+# Transform poverty variables to long format
+poverty_data <- data %>%
+  select(mergeid, starts_with("joint.income.wealth.poverty.bn.w")) %>%
+  pivot_longer(
+    cols = -mergeid,
+    names_to = "wave",
+    names_prefix = "joint.income.wealth.poverty.bn.w",
+    values_to = "poverty"
+  ) %>%
+  mutate(wave = as.integer(wave))
 
-# Preview the resulting TSE-format data
-tse_data
+# Merge age and poverty data
+
+tse_data <- left_join(age_data, poverty_data, by = c("mergeid", "wave"))
 
 tse_data <- tse_data %>%
   mutate(across(everything(), ~ ifelse(is.na(.), "missing", .)))
 
-
+levels(as.factor(tse_data$poverty))
+length(levels(as.factor(tse_data$poverty)))
 # transition matrix
+
 events <- levels(as.factor(tse_data$poverty))
 events
-dm <- matrix(TRUE, 3,3, dimnames=list(events, events))
+dm <- matrix(TRUE, 5,5, dimnames=list(events, events))
 dm
-dm[1, ] <- c(F, T, T)
-dm[2, ] <- c(T, F, T)
-dm[3, ] <- c(T, T, F)
+dm[1, ] <- c(F, T, T, T, T)
+dm[2, ] <- c(T, F, T, T, T)
+dm[3, ] <- c(T, T, F, T, T)
+dm[4, ] <- c(T, T, T, F, T)
+dm[5, ] <- c(T, T, T, T, F)
 print(dm)
 stm2 <- seqe2stm(events, dropMatrix=dm)
 
@@ -112,18 +156,13 @@ head(sts)
 
 sts[sts == "None"] <- "not.observed"
 
-
 head(sts)
 
-alphabet=c("0", "1", "missing", "not.observed")
-states=c("Not poor", "Poor", "Missing Info", "Not observed")
+events
+alphabet=c(events, "not.observed")
+states=c(events, "not.observed")
 
-# pov.seq <- seqdef(sts[,21:71], informat="STS", states = states, alphabet = alphabet, start= 50 ) # this imports sequence from 50
-tra.seq <- seqdef(sts[,36:70], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
-
-
-
-# pov.seq <- seqdef(sts[,21:71], informat="STS", states = states, alphabet = alphabet, start= 50 ) # this imports sequence from 50
+# tra.seq <- seqdef(sts[,36:70], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
 tra.seq <- seqdef(sts[,36:51], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
 
 seqdplot(tra.seq)
@@ -141,19 +180,8 @@ results <- as.data.frame(results)
 names(results)
 
 
-# filter <- which(results$`Not observed`==20
-#                 )
-# length(filter)
-# pov.seq <- pov.seq[-filter,]
-
-
-results <- seqistatd(pov.seq)
-results <- as.data.frame(results)
-names(results)
-
 filter <- which(results$Poor==0)
 length(filter)
 pov.seq <- pov.seq[-filter,]
-
 
 save(pov.seq, file="data_step4-out_pov-STS.Rdata")

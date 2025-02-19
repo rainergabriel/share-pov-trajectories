@@ -33,7 +33,7 @@ summary(trawc, max.rank=2)
 plot(trawc )
 
 seqdplot(tra.seq, group= trawc$clustering$cluster5,  with.legend=FALSE )
-seqdplot(tra.seq,  sort="from.end", group= trawc$clustering$cluster11 )
+seqdplot(tra.seq,  sort="from.end", group= trawc$clustering$cluster9 )
 
 seqIplot(tra.seq,  sort="from.end", group= trawc$clustering$cluster11 )
 seqIplot(tra.seq,  sort="from.end", group= trawc$clustering$cluster5,  with.legend=FALSE )
@@ -51,8 +51,8 @@ pov.wc
 summary(pov.wc, max.rank=2)
 plot(pov.wc )
 
-seqdplot(pov.seq, group= pov.wc$clustering$cluster5
-         ,  with.legend=FALSE
+seqdplot(pov.seq, group= pov.wc$clustering$cluster11
+         # ,  with.legend=FALSE
          )
 
 seqIplot(pov.seq, sort="from.end", group= pov.wc$clustering$cluster5

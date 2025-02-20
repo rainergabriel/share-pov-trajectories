@@ -159,11 +159,18 @@ sts[sts == "None"] <- "not.observed"
 head(sts)
 
 events
-alphabet=c(events, "not.observed")
-states=c(events, "not.observed")
+alphabet=c( "twice.poor"  , "income.poor.but.wealth" ,"not.poor.but.nowealth"  ,"not.poor" ,  "not.observed", "missing")
+states=c( "twice.poor"  , "income.poor.but.wealth" ,"not.poor.but.nowealth"  ,"not.poor" ,  "not.observed", "missing")
+labels= c("Twice poor", "Protected poor", "Economically vulnerable",  "Non-poor",      "Not observed", "Missing")
+         
+      
+       
+
 
 # tra.seq <- seqdef(sts[,36:70], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
-tra.seq <- seqdef(sts[,36:51], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
+tra.seq <- seqdef(sts[,36:51], informat="STS", states = states, alphabet = alphabet, start= 50 , labels=labels ) 
+
+summary(tra.seq)
 
 seqdplot(tra.seq)
 
@@ -179,8 +186,26 @@ results <- seqistatd(pov.seq)
 results <- as.data.frame(results)
 names(results)
 
+#remove those who are always missing
+filter <- which(results$missing==16)
+length(filter)
+pov.seq <- pov.seq[-filter,]
 
-filter <- which(results$Poor==0)
+#remove those who are never observed
+filter <- which(results$not.observed==16)
+length(filter)
+pov.seq <- pov.seq[-filter,]
+
+#remove those who are never poor
+filter <- which(results$not.poor==16)
+length(filter)
+pov.seq <- pov.seq[-filter,]
+
+filter <- which(results$not.poor==0 
+                & results$income.poor.but.wealth == 0 
+                & results$not.poor.but.nowealth == 0 
+                & results$twice.poor == 0 
+                  )
 length(filter)
 pov.seq <- pov.seq[-filter,]
 

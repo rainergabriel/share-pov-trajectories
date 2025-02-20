@@ -475,11 +475,16 @@ data <- data %>%
 
 
 prop.table(table(data$poverty.bn.w6))
-
+# 
+# 
+# # Extend BFS_Poverty_Thresholds to include wealth poverty threshold
+# BFS_Poverty_Thresholds <- BFS_Poverty_Thresholds %>%
+#   mutate(wealth.poverty.threshold = 12 * poverty.treshold)  # New variable
 
 # Extend BFS_Poverty_Thresholds to include wealth poverty threshold
-BFS_Poverty_Thresholds <- BFS_Poverty_Thresholds %>%
-  mutate(wealth.poverty.threshold = 12 * poverty.treshold)  # New variable
+BFS_Poverty_Thresholds <- cbind(BFS_Poverty_Thresholds, rep(30000, times=17))
+names(BFS_Poverty_Thresholds) <- c("Year", "poverty.treshold", "wealth.poverty.threshold")
+BFS_Poverty_Thresholds
 
 # Create lookup vector for wealth poverty thresholds
 wealth_poverty_threshold_lookup <- setNames(BFS_Poverty_Thresholds$wealth.poverty.threshold, as.character(BFS_Poverty_Thresholds$Year))
@@ -570,6 +575,7 @@ data <- data %>%
   )
 
 table(data$joint.income.wealth.poverty.bn.w6)
+prop.table(table(data$joint.income.wealth.poverty.bn.w6))
 
 # setting up the covariates (from the g2a file)
 
@@ -585,6 +591,10 @@ data <- data %>%
 summary(data$edu.rcd)
 length(which(is.na(data$edu.rcd)))
 
+#education years 
+data <- data %>% mutate(eduyears = raedyrs)
+data$eduyears
+
 #gender
 data <- data %>% 
   mutate( gender.rcd =  as.factor(case_when(
@@ -599,6 +609,32 @@ data <- data %>%
     racitizen == 0 ~ "Foreigner",
     racitizen == 1  ~ "Swiss"))) 
 table(data$is.swiss)
+
+
+# load isco work codings
+
+load(file="data_isco-job-codings.Rdata")
+isco_wide <- isco_wide %>% select(mergeid,highest_lifetime_ISCO_88_recoded ) 
+
+data <- data %>%
+  left_join(isco_wide, by = "mergeid")
+
+# calculate cohort 
+
+table(data$rabyear)
+
+data <- data %>%
+  mutate(cohort = case_when(
+    rabyear >= 1910 & rabyear < 1920 ~ "1910-1919",
+    rabyear >= 1920 & rabyear < 1930 ~ "1920-1929",
+    rabyear >= 1930 & rabyear < 1940 ~ "1930-1939",
+    rabyear >= 1940 & rabyear < 1950 ~ "1940-1949",
+    rabyear >= 1950 & rabyear < 1960 ~ "1950-1959",
+    rabyear >= 1960 & rabyear < 1970 ~ "1960-1969",
+    rabyear >= 1970 & rabyear < 1980 ~ "1970-1979",
+    TRUE ~ NA_character_  # Assign NA if outside the range
+  ))
+
 
 
 # save --------------------------------------------------------------------

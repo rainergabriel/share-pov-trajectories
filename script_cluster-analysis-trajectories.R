@@ -40,13 +40,13 @@ tra.seqdist <- seqdist(tra.seq, method="OM", sm = trans_cost)#clustering using O
 trawc <- wcKMedRange(tra.seqdist,kvals=2:20)
 trawc
 summary(trawc, max.rank=2)
-plot(trawc )
+# plot(trawc )
 
-# plot results 
-
-seqdplot(tra.seq, group= trawc$clustering$cluster15, with.legend=FALSE)
-seqdplot(tra.seq,  sort="from.end", group= trawc$clustering$cluster )
-seqistatd(tra.seq )
+# # plot results 
+# 
+# seqdplot(tra.seq, group= trawc$clustering$cluster15, with.legend=FALSE)
+# seqdplot(tra.seq,  sort="from.end", group= trawc$clustering$cluster )
+# seqistatd(tra.seq )
 
 # rename clusters based on results 
 
@@ -72,11 +72,12 @@ clustresults[clustresults=="4873"] <- "Mainly economically vulnerable"
 clustresults[clustresults=="849"] <- "Missing / not observed to non-poor"
 clustresults[clustresults=="952"] <- "Mainly missing to non-poor"
 
-seqdplot(tra.seq, group= clustresults)
 
+table(clustresults)
 
-seqiplot(tra.seq,  sort="from.end", group= clustresults )
-seqmtplot(tra.seq,  sort="from.end", group= clustresults )
+# 
+# seqiplot(tra.seq,  sort="from.end", group= clustresults )
+# seqmtplot(tra.seq,  sort="from.end", group= clustresults )
 
 
 
@@ -97,17 +98,33 @@ pov.seqdist <- seqdist(pov.seq, method="OM", sm = trans_cost)#clustering using O
 pov.wc <- wcKMedRange(pov.seqdist,kvals=2:20)
 pov.wc
 summary(pov.wc, max.rank=2)
-plot(pov.wc )
+# plot(pov.wc )
+# 
+# seqdplot(pov.seq, group= pov.wc$clustering$cluster16
+#          ,  with.legend=FALSE
+#          )
+# 
+# 
+# seqistatd(pov.seq)
+# 
+# seqIplot(pov.seq, sort="from.end", group= pov.wc$clustering$cluster5
+#          ,  with.legend=FALSE
+# )
 
-seqdplot(pov.seq, group= pov.wc$clustering$cluster16
-         ,  with.legend=FALSE
-         )
+# seqiplot(pov.seq, group= pov.wc$clustering$cluster5)
 
 
-seqistatd(pov.seq)
 
-seqIplot(pov.seq, sort="from.end", group= pov.wc$clustering$cluster5
-         ,  with.legend=FALSE
-)
+# saving the data as a variable  ------------------------------------------
 
-seqiplot(pov.seq, group= pov.wc$clustering$cluster5)
+ids <- rownames(tra.seq) 
+
+poverty.trajectories.clusters <- cbind(ids, clustresults)
+
+poverty.trajectories.clusters <- as_tibble(poverty.trajectories.clusters)
+names(poverty.trajectories.clusters) <- c("mergeid", "poverty.trajectories.clusters")
+
+head(poverty.trajectories.clusters)
+
+save(poverty.trajectories.clusters, file="data_poverty.trajectories.clusters.Rdata")
+

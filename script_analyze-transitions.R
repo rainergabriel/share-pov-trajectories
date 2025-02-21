@@ -1,36 +1,4 @@
-# Libraries ---------------------------------------------------------------
-# 
-# install.packages("TraMineR")
-# install.packages("TraMineRextras")
 
-library(tidyverse)
-library(TraMineR)
-library(TraMineRextras)
-
-
-# Clear everything  -------------------------------------------------------
-
-rm(list = ls())
-load(file="data_step3-out-variables-all-setup.Rdata")
-
-# creating variables as a basis to create a TSE frame ---------------------
-
-#calculate an 
-data <- data %>%
-  mutate(
-    age.w1 = r1iwy - rabyear,
-    age.w2 = r2iwy - rabyear,
-    age.w4 = r4iwy - rabyear,
-    age.w5 = r5iwy - rabyear,
-    age.w6 = r6iwy - rabyear,
-    age.w8 = r8iwy - rabyear,
-    age.w9 = r9iwy - rabyear, 
-    age.end.observation = 2022 - rabyear
-  )
-
-table(data$age.end.observation)
-
-# Transform data to long format
 
 # Libraries ---------------------------------------------------------------
 # 
@@ -40,14 +8,64 @@ table(data$age.end.observation)
 library(tidyverse)
 library(TraMineR)
 library(TraMineRextras)
+library(WeightedCluster)
+library(RColorBrewer)
+
+
 
 
 # Clear everything  -------------------------------------------------------
 
 rm(list = ls())
+load(file="data_step4-out_pov-STS.Rdata")
+load(file="data_step4-out_trajectories-STS.Rdata")
+load(file="data_covariates-pov-sts.Rdata")
+load( file="data_covariates-tra-sts.Rdata")
+load(file="data_step3-out-variables-all-setup.Rdata")
+
+
+# Transition matrix -------------------------------------------------------
+
+focus <- alphabet(pov.seq)[1:4]
+
+trans.matrix <- seqtrate(tra.seq, sel.states=focus)
+
+print(trans.matrix)
+
+
+
+# event sequence ----------------------------------------------------------
+
+# Create event sequence object
+seqe_data <- seqecreate(tra.seq)
+
+t <- as_tibble(seqe_data)
+
+summary(seqe_data)
+
+# Extract all sequences containing "non-poor → twice poor"
+specific_transitions <- seqefsub(seqe_data, c("Non-poor>Twice poor"))
+
+specific_transitions$eseq
+
+# Print sequences that contain the transition
+print(specific_transitions)
+
+seqIplot(tra.seq, group = (previous_state == "non-poor" & final_state == "twice poor"))
+
+
+
+
+# manually check sequences for transitions --------------------------------
+
+
+
+
+
 load(file="data_step3-out-variables-all-setup.Rdata")
 
 # creating variables as a basis to create a TSE frame ---------------------
+
 
 #calculate an 
 data <- data %>%
@@ -156,57 +174,36 @@ head(sts)
 
 sts[sts == "None"] <- "not.observed"
 
-head(sts)
+detect_twice_poor_transition <- function(sts) {
+  age_vars <- grep("^a[3-9][0-9]$|^a100$", names(sts), value = TRUE)  # Select age variables (a30 to a100)
+  sts$experience.twice.poor.transition.bn <- 0  # Initialize new variable with 0
+  
+  for (i in seq_along(age_vars)[-1]) {  # Start from second age variable to check transitions
+    prev_age <- age_vars[i - 1]
+    curr_age <- age_vars[i]
+    
+    # Identify individuals transitioning into "twice.poor" from specified states
+    transition_occurs <- sts[[curr_age]] == "twice.poor" & 
+      sts[[prev_age]] %in% c("income.poor.but.wealth", "not.poor.but.nowealth", "not.poor")
+    
+    # Assign 1 if any transition to "twice.poor" is observed for an individual
+    sts$experience.twice.poor.transition.bn <- sts$experience.twice.poor.transition.bn | transition_occurs
+  }
+  
+  sts$experience.twice.poor.transition.bn <- as.integer(sts$experience.twice.poor.transition.bn)  # Convert logical to integer
+  return(sts)
+}
 
-events
-alphabet=c( "twice.poor"  , "income.poor.but.wealth" ,"not.poor.but.nowealth"  ,"not.poor" ,  "not.observed", "missing")
-states=c( "twice.poor"  , "income.poor.but.wealth" ,"not.poor.but.nowealth"  ,"not.poor" ,  "not.observed", "missing")
-labels= c("Twice poor", "Protected poor", "Economically vulnerable",  "Non-poor",      "Not observed", "Missing")
-         
-      
-       
+sts <- detect_twice_poor_transition(sts)
 
+indicator <- cbind(rownames(sts), sts$experience.twice.poor.transition.bn)
+indicator
+indicator <- as_tibble(indicator)
+names(indicator) <- c("mergeid", "experience.twice.poor.transition.bn")
 
-# tra.seq <- seqdef(sts[,36:70], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
-tra.seq <- seqdef(sts[,36:51], informat="STS", states = states, alphabet = alphabet, start= 50 , labels=labels ) 
+data <- data %>%  left_join(indicator, by="mergeid")
+data$experience.twice.poor.transition.bn
 
-summary(tra.seq)
+data$gender.rcd
+glm(experience.twice.poor.transition.bn ~ gender.rcd, family= binomial, data=data )
 
-seqdplot(tra.seq)
-
-# subsetting useless observations -----------------------------------------
-
-save(tra.seq, file="data_step4-out_trajectories-STS.Rdata")
-
-# subsetting --------------------------------------------------------------
-
-pov.seq <- tra.seq 
-
-results <- seqistatd(pov.seq)
-results <- as.data.frame(results)
-names(results)
-
-#remove those who are always missing
-filter <- which(results$missing==16)
-length(filter)
-pov.seq <- pov.seq[-filter,]
-
-#remove those who are never observed
-filter <- which(results$not.observed==16)
-length(filter)
-pov.seq <- pov.seq[-filter,]
-
-#remove those who are never poor
-filter <- which(results$not.poor==16)
-length(filter)
-pov.seq <- pov.seq[-filter,]
-
-filter <- which(results$not.poor==0 
-                & results$income.poor.but.wealth == 0 
-                & results$not.poor.but.nowealth == 0 
-                & results$twice.poor == 0 
-                  )
-length(filter)
-pov.seq <- pov.seq[-filter,] 
-
-save(pov.seq, file="data_step4-out_pov-STS.Rdata")

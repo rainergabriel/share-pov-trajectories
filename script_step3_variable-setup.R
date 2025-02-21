@@ -577,6 +577,25 @@ data <- data %>%
 table(data$joint.income.wealth.poverty.bn.w6)
 prop.table(table(data$joint.income.wealth.poverty.bn.w6))
 
+
+#creating a binary variable for participation in wave effects 
+
+# Create binary variables indicating valid information for each wave
+# Define the waves included in the dataset
+# Define the waves included in the dataset
+waves <- c(2, 4, 5, 6, 7, 8, 9)
+
+# Create binary variables indicating valid information for each wave
+data <- data %>%
+  mutate(across(
+    all_of(paste0("joint.income.wealth.poverty.bn.w", waves)),
+    ~ as.integer(!is.na(.)),
+    .names = "valid.information.w{col}"
+  ))
+
+
+data$valid.information.wjoint.income.wealth.poverty.bn.w2
+
 # setting up the covariates (from the g2a file)
 
 #education 
@@ -619,6 +638,8 @@ isco_wide <- isco_wide %>% select(mergeid,highest_lifetime_ISCO_88_recoded )
 data <- data %>%
   left_join(isco_wide, by = "mergeid")
 
+data$highest_lifetime_ISCO_88_recoded <- relevel(as.factor(data$highest_lifetime_ISCO_88_recoded), ref="medium")
+
 # calculate cohort 
 
 table(data$rabyear)
@@ -634,6 +655,51 @@ data <- data %>%
     rabyear >= 1970 & rabyear < 1980 ~ "1970-1979",
     TRUE ~ NA_character_  # Assign NA if outside the range
   ))
+
+load(file="data_experience-poverty-transition.Rdata")
+
+data <- data %>%  left_join(indicator, by="mergeid")
+data$experience.twice.poor.transition.bn
+data$experience.income_poor_but_wealth.transition.bn
+
+
+
+load(file="data_poverty.trajectories.clusters.Rdata")
+poverty.trajectories.clusters
+data <- data %>%  left_join(poverty.trajectories.clusters, by="mergeid")
+data$poverty.trajectories.clusters
+
+clusters <- levels(as.factor(data$poverty.trajectories.clusters))
+library(dplyr)
+
+# Define a function to clean and format names safely without regex
+clean_name <- function(name) {
+  name <- gsub(" ", "_", name, fixed = TRUE)
+  name <- gsub("/", "_", name, fixed = TRUE)
+  name <- gsub("-", "_", name, fixed = TRUE)
+  return(name)
+}
+
+# Ensure poverty.trajectories.clusters is a factor
+if (!is.factor(data$poverty.trajectories.clusters)) {
+  data <- data %>% mutate(poverty.trajectories.clusters = as.factor(poverty.trajectories.clusters))
+}
+
+# Extract unique levels from the factor variable
+cluster_levels <- levels(data$poverty.trajectories.clusters)
+
+# Create binary indicators and store them as new columns in a dataframe
+binary_df <- as.data.frame(sapply(cluster_levels, function(cluster) {
+  as.integer(data$poverty.trajectories.clusters == cluster)
+}))
+
+# Rename the columns appropriately
+colnames(binary_df) <- paste0("POV.CLUST.", sapply(cluster_levels, clean_name))
+
+# Bind new binary variables to the original dataframe
+data <- bind_cols(data, binary_df)
+
+data$POV.CLUST.Mainly_economically_vulnerable
 
 
 

@@ -185,11 +185,12 @@ sts <- detect_state_transitions(sts)
 
 
 transition.data <- sts %>% select(starts_with("experience"))
+varnames <- names(transition.data)
 indicator <- cbind(rownames(sts), transition.data)
 is_tibble(indicator)
 head(indicator)
 indicator <- as_tibble(indicator)
-names(indicator) <- c("mergeid", names(indicator))
+names(indicator) <- c("mergeid", varnames)
 
 save(indicator, file="data_experience-poverty-transition.Rdata")
 

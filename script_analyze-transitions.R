@@ -30,9 +30,11 @@ focus <- alphabet(pov.seq)[1:4]
 
 trans.matrix <- seqtrate(tra.seq, sel.states=focus)
 
-print(trans.matrix)
+table <- print(trans.matrix)
 
+table
 
+write.csv(table, file="table_transition-matrix.csv")
 
 # event sequence ----------------------------------------------------------
 

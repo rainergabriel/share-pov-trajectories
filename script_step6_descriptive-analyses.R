@@ -25,7 +25,11 @@ load( file="data_covariates-tra-sts.Rdata")
 
 
 summary(tra.seq)
-cpal(tra.seq) <- c(brewer.pal(3, name="Reds"),
+cpal(tra.seq) <- c(
+  
+  brewer.pal(3, name="Reds")
+  
+  
                           "green",
                           "darkgreen", 
                           "magenta", 
@@ -34,6 +38,9 @@ cpal(tra.seq) <- c(brewer.pal(3, name="Reds"),
 
 
 cpal(tra.seq) <- c("#A50026", "#D73027", "#F46D43", "#006D2C", "#FFFFFF", "#F0F0F0")
+
+cpal(tra.seq) <- c("#DE2D26",  "#FC9272" ,"#FEE0D2", "#006D2C", "#FFFFFF", "#F0F0F0")
+
 
 seqIplot(tra.seq)
 seqiplot(tra.seq)

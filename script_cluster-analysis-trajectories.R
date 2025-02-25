@@ -39,18 +39,29 @@ tra.seqdist <- seqdist(tra.seq, method="OM", sm = trans_cost)#clustering using O
 
 trawc <- wcKMedRange(tra.seqdist,kvals=2:20)
 trawc
-summary(trawc, max.rank=2)
+table <- trawc
+table <- as_data_frame(table)
+
+write.csv(table, file="table_cluster-diagnostics-15-clusters.csv")
 # plot(trawc )
 
 # # plot results 
 # 
-# seqdplot(tra.seq, group= trawc$clustering$cluster15, with.legend=FALSE)
+seqdplot(tra.seq, group= trawc$clustering$cluster15)
 # seqdplot(tra.seq,  sort="from.end", group= trawc$clustering$cluster )
 # seqistatd(tra.seq )
 
 # rename clusters based on results 
 
+
+
 clustresults <- trawc$clustering$cluster15
+
+
+
+
+
+
 filter <- which (clustresults == 1 |
                    clustresults == 4749 |
                    clustresults == 4766 |
@@ -62,7 +73,7 @@ filter <- which (clustresults == 1 |
                  clustresults == 4904 )
 clustresults[filter] <- "Mainly missing / not observed"
 
-# seqdplot(tra.seq, group= clustresults)
+
 
 clustresults[clustresults=="2768"] <- "Mainly protected poor"
 clustresults[clustresults=="332"] <- "Mainly Non-poor"
@@ -72,11 +83,26 @@ clustresults[clustresults=="4873"] <- "Mainly economically vulnerable"
 clustresults[clustresults=="849"] <- "Missing / not observed to non-poor"
 clustresults[clustresults=="952"] <- "Mainly missing to non-poor"
 
+seqdplot(tra.seq, group= clustresults, with.legend=FALSE)
+
+seqiplot(tra.seq, group= clustresults, with.legend=FALSE)
 
 table(clustresults)
 
+
+
+# Generate a dummy plot with the legend but suppress the main plot
+seqdplot(tra.seq, group = clustresults, with.legend = TRUE, plot = FALSE)
+
+plot.new()  # Create an empty plotting space
+# Extract legend colors and labels
+state_colors <- attr(tra.seq, "cpal")
+state_labels <- attr(tra.seq, "labels")
+legend("center", legend = state_labels, fill = state_colors, cex = 1.2, bty = "n")
+
+
 # 
-# seqiplot(tra.seq,  sort="from.end", group= clustresults )
+seqiplot(tra.seq,  sort="from.end", group= clustresults )
 # seqmtplot(tra.seq,  sort="from.end", group= clustresults )
 
 
@@ -100,9 +126,11 @@ pov.wc
 summary(pov.wc, max.rank=2)
 # plot(pov.wc )
 # 
-# seqdplot(pov.seq, group= pov.wc$clustering$cluster16
-#          ,  with.legend=FALSE
-#          )
+seqdplot(pov.seq, group= pov.wc$clustering$cluster16
+         ,  with.legend=FALSE
+         )
+
+
 # 
 # 
 # seqistatd(pov.seq)

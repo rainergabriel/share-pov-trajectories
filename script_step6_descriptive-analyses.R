@@ -25,30 +25,34 @@ load( file="data_covariates-tra-sts.Rdata")
 
 
 summary(tra.seq)
-cpal(tra.seq) <- c(
-  
-  brewer.pal(3, name="Reds")
-  
-  
-                          "green",
-                          "darkgreen", 
-                          "magenta", 
-                          brewer.pal(4, name="Blues"), 
-                          "white")
 
 
-cpal(tra.seq) <- c("#A50026", "#D73027", "#F46D43", "#006D2C", "#FFFFFF", "#F0F0F0")
 
 cpal(tra.seq) <- c("#DE2D26",  "#FC9272" ,"#FEE0D2", "#006D2C", "#FFFFFF", "#F0F0F0")
 
 
-seqIplot(tra.seq)
+
+seqIplot(tra.seq, sort="from.end",with.legend=F)
+seqiplot(tra.seq, sort="from.start",with.legend=F)
+seqmtplot(tra.seq, sort="from.start",with.legend=F)
+
+seqdplot(tra.seq,with.legend=F)
+
+seqdplot(tra.seq,with.legend=F)
+
+
+
+seqdplot(tra.seq,with.legend=F, group= cov.data.tra$gender.rcd)
+
+
 seqiplot(tra.seq)
 seqdplot(tra.seq)
 
 # grouped plots 
 
 seqdplot(tra.seq, group= cov.data.tra$gender.rcd)
+
+
   seqdplot(tra.seq, group= cov.data.tra$is.swiss)
   seqdplot(tra.seq, group= cov.data.tra$edu.rcd)
   
@@ -57,7 +61,7 @@ seqdplot(tra.seq, group= cov.data.tra$gender.rcd)
 
 
   
-  seqIplot(pov.seq, sort="from.end")
+  seqIplot(pov.seq, sort="from.end", )
   seqiplot(pov.seq)
   seqdplot(pov.seq)
   

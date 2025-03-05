@@ -656,13 +656,6 @@ data <- data %>%
     TRUE ~ NA_character_  # Assign NA if outside the range
   ))
 
-load(file="data_experience-poverty-transition.Rdata")
-
-data <- data %>%  left_join(indicator, by="mergeid")
-data$experience.twice.poor.transition.bn
-data$experience.income_poor_but_wealth.transition.bn
-
-
 
 load(file="data_poverty.trajectories.clusters.Rdata")
 poverty.trajectories.clusters

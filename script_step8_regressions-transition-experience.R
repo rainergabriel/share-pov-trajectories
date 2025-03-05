@@ -8,30 +8,17 @@ library(kableExtra)
 
 # Load data
 rm(list=ls())
-load(file="data_step3-out-variables-all-setup.Rdata")
+load(file="data_transition-data.Rdata")
 
+data <- transition.data
 
 names(data %>% select(starts_with("experience")))
 
 # --- experience.twice_poor.transition.bn ---
 m1_twp <- glm(experience.twice_poor.transition.bn ~ eduyears, family = "binomial", data = data)
 m2_twp <- glm(experience.twice_poor.transition.bn ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_twp <- glm(experience.twice_poor.transition.bn ~ eduyears + cohort + gender.rcd +
-                valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-m4_twp <- glm(experience.twice_poor.transition.bn ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-                valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
+m3_twp <- glm(experience.twice_poor.transition.bn ~ eduyears + age + cohort + gender.rcd , family = "binomial", data = data)
+m4_twp <- glm(experience.twice_poor.transition.bn ~ highest_lifetime_ISCO_88_recoded + age + cohort + gender.rcd , family = "binomial", data = data)
 
 coef_m1_twp <- exp(coef(m1_twp))
 coef_m2_twp <- exp(coef(m2_twp))
@@ -55,22 +42,8 @@ stargazer(
 # --- experience.income_poor_but_wealth.transition.bn ---
 m1_ipw <- glm(experience.income_poor_but_wealth.transition.bn ~ eduyears, family = "binomial", data = data)
 m2_ipw <- glm(experience.income_poor_but_wealth.transition.bn ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_ipw <- glm(experience.income_poor_but_wealth.transition.bn ~ eduyears + cohort + gender.rcd +
-                valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-m4_ipw <- glm(experience.income_poor_but_wealth.transition.bn ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-                valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
+m3_ipw <- glm(experience.income_poor_but_wealth.transition.bn ~ eduyears + cohort + gender.rcd +age, family = "binomial", data = data)
+m4_ipw <- glm(experience.income_poor_but_wealth.transition.bn ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +age, family = "binomial", data = data)
 
 coef_m1_ipw <- exp(coef(m1_ipw))
 coef_m2_ipw <- exp(coef(m2_ipw))
@@ -94,22 +67,8 @@ stargazer(
 # --- experience.not_poor_but_nowealth.transition.bn ---
 m1_npbnw <- glm(experience.not_poor_but_nowealth.transition.bn ~ eduyears, family = "binomial", data = data)
 m2_npbnw <- glm(experience.not_poor_but_nowealth.transition.bn ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_npbnw <- glm(experience.not_poor_but_nowealth.transition.bn ~ eduyears + cohort + gender.rcd +
-                  valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-m4_npbnw <- glm(experience.not_poor_but_nowealth.transition.bn ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-                  valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                  valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
+m3_npbnw <- glm(experience.not_poor_but_nowealth.transition.bn ~ eduyears + cohort + gender.rcd +age, family = "binomial", data = data)
+m4_npbnw <- glm(experience.not_poor_but_nowealth.transition.bn ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +age, family = "binomial", data = data)
 
 coef_m1_npbnw <- exp(coef(m1_npbnw))
 coef_m2_npbnw <- exp(coef(m2_npbnw))
@@ -133,23 +92,10 @@ stargazer(
 # --- experience.not_poor.transition.bn ---
 m1_np <- glm(experience.not_poor.transition.bn ~ eduyears, family = "binomial", data = data)
 m2_np <- glm(experience.not_poor.transition.bn ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_np <- glm(experience.not_poor.transition.bn ~ eduyears + cohort + gender.rcd +
-               valid.information.wjoint.income.wealth.poverty.bn.w2 +
-               valid.information.wjoint.income.wealth.poverty.bn.w4 +
-               valid.information.wjoint.income.wealth.poverty.bn.w5 +
-               valid.information.wjoint.income.wealth.poverty.bn.w6 +
-               valid.information.wjoint.income.wealth.poverty.bn.w7 +
-               valid.information.wjoint.income.wealth.poverty.bn.w8 +
-               valid.information.wjoint.income.wealth.poverty.bn.w9, 
+m3_np <- glm(experience.not_poor.transition.bn ~ eduyears + cohort + gender.rcd +age, 
              family = "binomial", data = data)
 m4_np <- glm(experience.not_poor.transition.bn ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-               valid.information.wjoint.income.wealth.poverty.bn.w2 +
-               valid.information.wjoint.income.wealth.poverty.bn.w4 +
-               valid.information.wjoint.income.wealth.poverty.bn.w5 +
-               valid.information.wjoint.income.wealth.poverty.bn.w6 +
-               valid.information.wjoint.income.wealth.poverty.bn.w7 +
-               valid.information.wjoint.income.wealth.poverty.bn.w8 +
-               valid.information.wjoint.income.wealth.poverty.bn.w9, 
+               valid.information.wjoint.income.wealth.poverty.bn.w2 +age, 
              family = "binomial", data = data)
 
 coef_m1_np <- exp(coef(m1_np))
@@ -204,6 +150,22 @@ stargazer(
   m1_2, m2_2, m3_2, m4_2,
   coef = list(coef_m1_1, coef_m2_1, coef_m3_1, coef_m4_1,
               coef_m1_2, coef_m2_2, coef_m3_2, coef_m4_2),
+  type = "text", 
+  report = "vc*",
+  omit = c("valid*", "cohort*", "Constant", "gender*"),
+  single.row = TRUE,
+  p.auto = FALSE,
+  digits = 2,
+  # dep.var.caption = "Poverty Trajectory Type - Twice Poor & Income Poor but Wealthy",
+  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
+)
+
+
+stargazer(
+  m1_1, m2_1, m3_1, m4_1,
+  m1_2, m2_2, m3_2, m4_2,
+  coef = list(coef_m1_1, coef_m2_1, coef_m3_1, coef_m4_1,
+              coef_m1_2, coef_m2_2, coef_m3_2, coef_m4_2),
   type = "html", 
   out = "stargazer_table_transitions_1.html",
   report = "vc*",
@@ -211,11 +173,28 @@ stargazer(
   single.row = TRUE,
   p.auto = FALSE,
   digits = 2,
-  dep.var.caption = "Poverty Trajectory Type - Twice Poor & Income Poor but Wealthy",
+  # dep.var.caption = "Poverty Trajectory Type - Twice Poor & Income Poor but Wealthy",
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
 
+
+
 # --- Consolidated Table 2: Not Poor but No Wealth & Transition to Not Poor ---
+stargazer(
+  m1_3, m2_3, m3_3, m4_3,
+  m1_4, m2_4, m3_4, m4_4,
+  coef = list(coef_m1_3, coef_m2_3, coef_m3_3, coef_m4_3,
+              coef_m1_4, coef_m2_4, coef_m3_4, coef_m4_4),
+  type = "text", 
+  report = "vc*",
+  omit = c("valid*", "cohort*", "Constant", "gender*"),
+  single.row = TRUE,
+  p.auto = FALSE,
+  digits = 2,
+  # dep.var.caption = "Poverty Trajectory Type - Not Poor but No Wealth & Transition to Not Poor",
+  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
+)
+
 stargazer(
   m1_3, m2_3, m3_3, m4_3,
   m1_4, m2_4, m3_4, m4_4,

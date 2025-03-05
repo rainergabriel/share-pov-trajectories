@@ -10,14 +10,12 @@ library(TraMineR)
 library(TraMineRextras)
 library(WeightedCluster)
 library(RColorBrewer)
-library(MASS)
 library(stargazer)
 
 
 
 # Load required libraries
 library(tidyverse)
-library(MASS)  # For ordered logit
 
 
 
@@ -68,7 +66,7 @@ table(data$age.end.observation)
 
 # Transform age variables to long format
 age_data <- data %>%
-  select(mergeid, starts_with("age.w")) %>%
+  dplyr::select(mergeid, starts_with("age.w")) %>%
   pivot_longer(
     cols = -mergeid,
     names_to = "wave",
@@ -164,26 +162,6 @@ levels(as.factor(sts$a70))
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Step 1: Convert Wide Data to Long Format
 long_data <- sts %>%
   rownames_to_column(var = "mergeid") %>%  # Convert row names to a column
@@ -191,6 +169,11 @@ long_data <- sts %>%
                names_to = "age", 
                values_to = "state") %>%
   mutate(age = as.numeric(str_replace(age, "a", "")))  # Extract numeric age (e.g., 'a70' → 70)
+
+
+
+
+
 
 # Step 2: Keep only relevant financial states
 valid_states <- c("not.poor", "not.poor.but.nowealth", "income.poor.but.wealth", "twice.poor")
@@ -211,31 +194,34 @@ long_data <- long_data %>%
 long_data <- long_data %>%
   filter(!is.na(state_previous))  # Ensure only valid previous states
 
-# Step 5: Create Dependent Variables for binomial Logit Model
-long_data <- long_data %>%
-  rename(state_t1 = state)   %>% 
-  mutate( # Rename state to represent state at time t+1
+
+# subset ages outside of the ages of interest
+
+long_data <- long_data %>% subset(age >= 65 & age <= 80)
+summary(long_data$age)
+
+names(long_data)
+levels(as.factor(long_data$state))
+levels(as.factor(long_data$state_previous))
 
 
-# Step 6: Run Ordered Logit Model with Age as the Time Variable
-ordered_logit <- polr(state_t1 ~ age, data = long_data, method = "logistic")
-summary(ordered_logit)
+
+# indicators --------------------------------------------------------------
 
 
-coef.ordered_logit <- exp(coef(ordered_logit))
+transition.data <- long_data %>%
+  mutate(
+    experience.not_poor.transition.bn = ifelse(state == "not.poor" & state_previous != "not.poor", 1, 0),
+    experience.not_poor_but_nowealth.transition.bn = ifelse(state == "not.poor.but.nowealth" & state_previous != "not.poor.but.nowealth", 1, 0),
+    experience.income_poor_but_wealth.transition.bn = ifelse(state == "income.poor.but.wealth" & state_previous != "income.poor.but.wealth", 1, 0),
+    experience.twice_poor.transition.bn = ifelse(state == "twice.poor" & state_previous != "twice.poor", 1, 0)
+  )
 
-stargazer(
-  coef.ordered_logit,
-  coef = list(coef.ordered_logit),
-  type = "text", 
-  report = "vc*",
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.labels = "Mainly missing to non-poor", 
-  dep.var.caption = "Poverty trajectory type",
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
+transition.data <- left_join(transition.data, data, by="mergeid")
 
+
+head(transition.data)
+# save --------------------------------------------------------------------
+
+save(transition.data, file="data_transition-data.Rdata")
 

@@ -209,6 +209,8 @@ for (wave in waves) {
 }
 
 
+rm(number.children.living.inHH)
+
 
 
 # calculate the equivalized income for each wave
@@ -236,133 +238,194 @@ data <- data %>%
     as.numeric(chf.eur.exrates$nomx_value[find])
   }, .names = "chf.eur.exrate_{col}"))
 
-# in the next step we transform into chf, adjust to monthly, and divide by equivalizing factor
-glimpse(data$hh1itot)
-glimpse(data$household.equiv.weighting.factor.w1)
-glimpse(data$hh9)
 
-#setting up w1 where the variables are slightly different
+# Load the dataset with wave-specific thinc2 income variables (thinc2 being the one-shot question for total household income)
+load(file = "data_wave-specific-thinc2.Rdata") 
+
+# Filter `thinc2_data` to only keep `mergeid` values that exist in `data`
+thinc2_filtered <- thinc2_data %>%
+  filter(mergeid %in% data$mergeid)
+
+# Merge only the relevant `thinc2` variables with `data`
+data <- data %>%
+  left_join(thinc2_filtered, by = "mergeid")
+
+
+# Load the dataset with wave-specific hnetw variables (hnet being the total net household wealth from the GV imputation in SHARE)
+load(file = "data_wave-specific-hnetw.Rdata") 
+
+# Filter `hnetw_data` to only keep `mergeid` values that exist in `data`
+hnetw_filtered <- hnetw_data %>%
+  filter(mergeid %in% data$mergeid)
+
+# Merge only the relevant `hnetw` variables with `data`
+data <- data %>%
+  left_join(hnetw_filtered, by = "mergeid")
+
+
+rm(hnetw_data, hnetw_filtered)
+
+
+### transform wealth into CHF
+
+# Apply transformations for each wave (w2 to w9)
 data <- data %>%
   mutate(
-    yearly.thinc.eur.w1 = hh1itot,
-    yearly.thinc.chf.w1 = if_else(
-      is.na(hh1itot) | is.na(chf.eur.exrate_r1iwy),
-      NA,
-      hh1itot / chf.eur.exrate_r1iwy
+    # Wave 2
+    household.wealth.eur.w2 = w2.hnetw,
+    household.wealth.chf.w2 = if_else(
+      is.na(w2.hnetw) | is.na(chf.eur.exrate_r2iwy),
+      NA_real_,
+      w2.hnetw * chf.eur.exrate_r2iwy
     ),
-    monthly.thinc.chf.w1 = if_else(is.na(yearly.thinc.chf.w1), NA, yearly.thinc.chf.w1 /
-                                     12),
-    equiv.hhinc.w1 = monthly.thinc.chf.w1 / household.equiv.weighting.factor.w1
+    
+    # Wave 4
+    household.wealth.eur.w4 = w4.hnetw,
+    household.wealth.chf.w4 = if_else(
+      is.na(w4.hnetw) | is.na(chf.eur.exrate_r4iwy),
+      NA_real_,
+      w4.hnetw * chf.eur.exrate_r4iwy
+    ),
+    
+    # Wave 5
+    household.wealth.eur.w5 = w5.hnetw,
+    household.wealth.chf.w5 = if_else(
+      is.na(w5.hnetw) | is.na(chf.eur.exrate_r5iwy),
+      NA_real_,
+      w5.hnetw * chf.eur.exrate_r5iwy
+    ),
+    
+    # Wave 6
+    household.wealth.eur.w6 = w6.hnetw,
+    household.wealth.chf.w6 = if_else(
+      is.na(w6.hnetw) | is.na(chf.eur.exrate_r6iwy),
+      NA_real_,
+      w6.hnetw * chf.eur.exrate_r6iwy
+    ),
+    
+    # Wave 7
+    household.wealth.eur.w7 = w7.hnetw,
+    household.wealth.chf.w7 = if_else(
+      is.na(w7.hnetw) | is.na(chf.eur.exrate_r7iwy),
+      NA_real_,
+      w7.hnetw * chf.eur.exrate_r7iwy
+    ),
+    
+    # Wave 8
+    household.wealth.eur.w8 = w8.hnetw,
+    household.wealth.chf.w8 = if_else(
+      is.na(w8.hnetw) | is.na(chf.eur.exrate_r8iwy),
+      NA_real_,
+      w8.hnetw * chf.eur.exrate_r8iwy
+    ),
+    
+    # Wave 9
+    household.wealth.eur.w9 = w9.hnetw,
+    household.wealth.chf.w9 = if_else(
+      is.na(w9.hnetw) | is.na(chf.eur.exrate_r9iwy),
+      NA_real_,
+      w9.hnetw * chf.eur.exrate_r9iwy
+    )
   )
-summary(data$equiv.hhinc.w1)
+
+# Display summaries
+summary(data$household.wealth.chf.w2)
+summary(data$household.wealth.chf.w3)
+summary(data$household.wealth.chf.w4)
+summary(data$household.wealth.chf.w5)
+summary(data$household.wealth.chf.w6)
+summary(data$household.wealth.chf.w7)
+summary(data$household.wealth.chf.w8)
+summary(data$household.wealth.chf.w9)
 
 
-# then setting up waves 4-9
-# note: i stumbled across a problem where the total houhosel income (hhWittot) is missing for w6-w9 for no reason (it exists in the regular waves)
-# therefore i use the other one-shot household income measure hhWitothhinc
-glimpse(data$hh2ittot)
+# in the next step we transform household income into chf, adjust to monthly, and divide by equivalizing factor
 
-
-# For w2
+# Apply transformations for each wave (w2 to w9)
 data <- data %>%
   mutate(
-    yearly.thinc.eur.w2 = hh2itothhinc,
+    # Wave 2
+    yearly.thinc.eur.w2 = w2.thinc2,
     yearly.thinc.chf.w2 = if_else(
-      is.na(hh2itothhinc) | is.na(chf.eur.exrate_r2iwy),
+      is.na(w2.thinc2) | is.na(chf.eur.exrate_r2iwy),
       NA_real_,
-      hh2itothhinc / chf.eur.exrate_r2iwy
+      w2.thinc2 * chf.eur.exrate_r2iwy
     ),
-    monthly.thinc.chf.w2 = if_else(is.na(yearly.thinc.chf.w2), NA_real_, yearly.thinc.chf.w2 / 12),
-    equiv.hhinc.w2 = monthly.thinc.chf.w2 / household.equiv.weighting.factor.w2
-  )
-summary(data$equiv.hhinc.w4)
-
-
-# For w4
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w4 = hh4itothhinc,
+    monthly.thinc.chf.w2 = yearly.thinc.chf.w2 / 12,
+    equiv.hhinc.w2 = monthly.thinc.chf.w2 / household.equiv.weighting.factor.w2,
+    
+    # Wave 4
+    yearly.thinc.eur.w4 = w4.thinc2,
     yearly.thinc.chf.w4 = if_else(
-      is.na(hh4itothhinc) | is.na(chf.eur.exrate_r4iwy),
+      is.na(w4.thinc2) | is.na(chf.eur.exrate_r4iwy),
       NA_real_,
-      hh4itothhinc / chf.eur.exrate_r4iwy
+      w4.thinc2 * chf.eur.exrate_r4iwy
     ),
-    monthly.thinc.chf.w4 = if_else(is.na(yearly.thinc.chf.w4), NA_real_, yearly.thinc.chf.w4 / 12),
-    equiv.hhinc.w4 = monthly.thinc.chf.w4 / household.equiv.weighting.factor.w4
-  )
-summary(data$equiv.hhinc.w4)
-
-# For w5
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w5 = hh5itothhinc,
+    monthly.thinc.chf.w4 = yearly.thinc.chf.w4 / 12,
+    equiv.hhinc.w4 = monthly.thinc.chf.w4 / household.equiv.weighting.factor.w4,
+    
+    # Wave 5
+    yearly.thinc.eur.w5 = w5.thinc2,
     yearly.thinc.chf.w5 = if_else(
-      is.na(hh5itothhinc) | is.na(chf.eur.exrate_r5iwy),
+      is.na(w5.thinc2) | is.na(chf.eur.exrate_r5iwy),
       NA_real_,
-      hh5itothhinc / chf.eur.exrate_r5iwy
+      w5.thinc2 * chf.eur.exrate_r5iwy
     ),
-    monthly.thinc.chf.w5 = if_else(is.na(yearly.thinc.chf.w5), NA_real_, yearly.thinc.chf.w5 / 12),
-    equiv.hhinc.w5 = monthly.thinc.chf.w5 / household.equiv.weighting.factor.w5
-  )
-summary(data$equiv.hhinc.w5)
-
-# For w6
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w6 = hh6itothhinc,
+    monthly.thinc.chf.w5 = yearly.thinc.chf.w5 / 12,
+    equiv.hhinc.w5 = monthly.thinc.chf.w5 / household.equiv.weighting.factor.w5,
+    
+    # Wave 6
+    yearly.thinc.eur.w6 = w6.thinc2,
     yearly.thinc.chf.w6 = if_else(
-      is.na(hh6itothhinc) | is.na(chf.eur.exrate_r6iwy),
+      is.na(w6.thinc2) | is.na(chf.eur.exrate_r6iwy),
       NA_real_,
-      hh6itothhinc / chf.eur.exrate_r6iwy
+      w6.thinc2 * chf.eur.exrate_r6iwy
     ),
-    monthly.thinc.chf.w6 = if_else(is.na(yearly.thinc.chf.w6), NA_real_, yearly.thinc.chf.w6 / 12),
-    equiv.hhinc.w6 = monthly.thinc.chf.w6 / household.equiv.weighting.factor.w6
-  )
-summary(data$equiv.hhinc.w6)
-
-# For w7
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w7 = hh7itothhinc,
+    monthly.thinc.chf.w6 = yearly.thinc.chf.w6 / 12,
+    equiv.hhinc.w6 = monthly.thinc.chf.w6 / household.equiv.weighting.factor.w6,
+    
+    # Wave 7
+    yearly.thinc.eur.w7 = w7.thinc2,
     yearly.thinc.chf.w7 = if_else(
-      is.na(hh7itothhinc) | is.na(chf.eur.exrate_r7iwy),
+      is.na(w7.thinc2) | is.na(chf.eur.exrate_r7iwy),
       NA_real_,
-      hh7itothhinc / chf.eur.exrate_r7iwy
+      w7.thinc2 * chf.eur.exrate_r7iwy
     ),
-    monthly.thinc.chf.w7 = if_else(is.na(yearly.thinc.chf.w7), NA_real_, yearly.thinc.chf.w7 / 12),
-    equiv.hhinc.w7 = monthly.thinc.chf.w7 / household.equiv.weighting.factor.w7
-  )
-summary(data$equiv.hhinc.w7)
-
-# For w8
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w8 = hh8itothhinc,
+    monthly.thinc.chf.w7 = yearly.thinc.chf.w7 / 12,
+    equiv.hhinc.w7 = monthly.thinc.chf.w7 / household.equiv.weighting.factor.w7,
+    
+    # Wave 8
+    yearly.thinc.eur.w8 = w8.thinc2,
     yearly.thinc.chf.w8 = if_else(
-      is.na(hh8itothhinc) | is.na(chf.eur.exrate_r8iwy),
+      is.na(w8.thinc2) | is.na(chf.eur.exrate_r8iwy),
       NA_real_,
-      hh8itothhinc / chf.eur.exrate_r8iwy
+      w8.thinc2 * chf.eur.exrate_r8iwy
     ),
-    monthly.thinc.chf.w8 = if_else(is.na(yearly.thinc.chf.w8), NA_real_, yearly.thinc.chf.w8 / 12),
-    equiv.hhinc.w8 = monthly.thinc.chf.w8 / household.equiv.weighting.factor.w8
-  )
-summary(data$equiv.hhinc.w8)
-
-# For w9
-data <- data %>%
-  mutate(
-    yearly.thinc.eur.w9 = hh9itothhinc,
+    monthly.thinc.chf.w8 = yearly.thinc.chf.w8 / 12,
+    equiv.hhinc.w8 = monthly.thinc.chf.w8 / household.equiv.weighting.factor.w8,
+    
+    # Wave 9
+    yearly.thinc.eur.w9 = w9.thinc2,
     yearly.thinc.chf.w9 = if_else(
-      is.na(hh9itothhinc) | is.na(chf.eur.exrate_r9iwy),
+      is.na(w9.thinc2) | is.na(chf.eur.exrate_r9iwy),
       NA_real_,
-      hh9itothhinc / chf.eur.exrate_r9iwy
+      w9.thinc2 * chf.eur.exrate_r9iwy
     ),
-    monthly.thinc.chf.w9 = if_else(is.na(yearly.thinc.chf.w9), NA_real_, yearly.thinc.chf.w9 / 12),
+    monthly.thinc.chf.w9 = yearly.thinc.chf.w9 / 12,
     equiv.hhinc.w9 = monthly.thinc.chf.w9 / household.equiv.weighting.factor.w9
   )
+
+# Display summaries
+summary(data$equiv.hhinc.w2)
+summary(data$equiv.hhinc.w4)
+summary(data$equiv.hhinc.w5)
+summary(data$equiv.hhinc.w6)
+summary(data$equiv.hhinc.w7)
+summary(data$equiv.hhinc.w8)
 summary(data$equiv.hhinc.w9)
 
-# at this point we have equivalized household incomes for each wave 
+
+# at this point we have equivalized monthly household incomes for each wave for each respondent
 
 # now we transform the equivalized household income to poverty indicators 
 # note, since the variable which i've now used as hhincome is not available for w1 and is not comparable, i do the sequences only for w2-9 ( skipping 3 because it is missing)
@@ -411,6 +474,128 @@ data <- data %>%
   )
 
 
+prop.table(table(data$poverty.bn.w6))
+# 
+# 
+# # Extend BFS_Poverty_Thresholds to include wealth poverty threshold
+# BFS_Poverty_Thresholds <- BFS_Poverty_Thresholds %>%
+#   mutate(wealth.poverty.threshold = 12 * poverty.treshold)  # New variable
+
+# Extend BFS_Poverty_Thresholds to include wealth poverty threshold
+BFS_Poverty_Thresholds <- cbind(BFS_Poverty_Thresholds, rep(30000, times=17))
+names(BFS_Poverty_Thresholds) <- c("Year", "poverty.treshold", "wealth.poverty.threshold")
+BFS_Poverty_Thresholds
+
+# Create lookup vector for wealth poverty thresholds
+wealth_poverty_threshold_lookup <- setNames(BFS_Poverty_Thresholds$wealth.poverty.threshold, as.character(BFS_Poverty_Thresholds$Year))
+
+# Loop through waves, skipping wave 3
+waves <- c(1, 2, 4, 5, 6, 7, 8, 9)
+
+# Iterate through each wave and create wealth poverty threshold variables
+for (wave in waves) {
+  year_var <- paste0("r", wave, "iwy")  # Interview year variable
+  wealth_poverty_var <- paste0("wealth.poverty.threshold.w", wave)  # Wealth poverty threshold variable
+  
+  if (!year_var %in% colnames(data)) {
+    warning(paste("Year variable", year_var, "not found in dataset"))
+    next
+  }
+  
+  # Assign wealth poverty threshold
+  data[[wealth_poverty_var]] <- wealth_poverty_threshold_lookup[as.character(data[[year_var]])]
+}
+
+# Create wave-specific wealth poverty indicators
+data <- data %>%
+  mutate(
+    wealth.poverty.bn.w2 = ifelse(household.wealth.chf.w2 < wealth.poverty.threshold.w2, 1, 0),
+    wealth.poverty.bn.w4 = ifelse(household.wealth.chf.w4 < wealth.poverty.threshold.w4, 1, 0),
+    wealth.poverty.bn.w5 = ifelse(household.wealth.chf.w5 < wealth.poverty.threshold.w5, 1, 0),
+    wealth.poverty.bn.w6 = ifelse(household.wealth.chf.w6 < wealth.poverty.threshold.w6, 1, 0),
+    wealth.poverty.bn.w7 = ifelse(household.wealth.chf.w7 < wealth.poverty.threshold.w7, 1, 0),
+    wealth.poverty.bn.w8 = ifelse(household.wealth.chf.w8 < wealth.poverty.threshold.w8, 1, 0),
+    wealth.poverty.bn.w9 = ifelse(household.wealth.chf.w9 < wealth.poverty.threshold.w9, 1, 0)
+  )
+
+
+#create a joint-income wealth poverty indicator
+
+data <- data %>%
+  mutate(
+    joint.income.wealth.poverty.bn.w2 = case_when(
+      poverty.bn.w2 == 1 & wealth.poverty.bn.w2 == 1 ~ "twice.poor",
+      poverty.bn.w2 == 0 & wealth.poverty.bn.w2 == 1 ~ "not.poor.but.nowealth",
+      poverty.bn.w2 == 1 & wealth.poverty.bn.w2 == 0 ~ "income.poor.but.wealth",
+      poverty.bn.w2 == 0 & wealth.poverty.bn.w2 == 0 ~ "not.poor",
+      TRUE ~ NA_character_
+    ),
+    joint.income.wealth.poverty.bn.w4 = case_when(
+      poverty.bn.w4 == 1 & wealth.poverty.bn.w4 == 1 ~ "twice.poor",
+      poverty.bn.w4 == 0 & wealth.poverty.bn.w4 == 1 ~ "not.poor.but.nowealth",
+      poverty.bn.w4 == 1 & wealth.poverty.bn.w4 == 0 ~ "income.poor.but.wealth",
+      poverty.bn.w4 == 0 & wealth.poverty.bn.w4 == 0 ~ "not.poor",
+      TRUE ~ NA_character_
+    ),
+    joint.income.wealth.poverty.bn.w5 = case_when(
+      poverty.bn.w5 == 1 & wealth.poverty.bn.w5 == 1 ~ "twice.poor",
+      poverty.bn.w5 == 0 & wealth.poverty.bn.w5 == 1 ~ "not.poor.but.nowealth",
+      poverty.bn.w5 == 1 & wealth.poverty.bn.w5 == 0 ~ "income.poor.but.wealth",
+      poverty.bn.w5 == 0 & wealth.poverty.bn.w5 == 0 ~ "not.poor",
+      TRUE ~ NA_character_
+    ),
+    joint.income.wealth.poverty.bn.w6 = case_when(
+      poverty.bn.w6 == 1 & wealth.poverty.bn.w6 == 1 ~ "twice.poor",
+      poverty.bn.w6 == 0 & wealth.poverty.bn.w6 == 1 ~ "not.poor.but.nowealth",
+      poverty.bn.w6 == 1 & wealth.poverty.bn.w6 == 0 ~ "income.poor.but.wealth",
+      poverty.bn.w6 == 0 & wealth.poverty.bn.w6 == 0 ~ "not.poor",
+      TRUE ~ NA_character_
+    ),
+    joint.income.wealth.poverty.bn.w7 = case_when(
+      poverty.bn.w7 == 1 & wealth.poverty.bn.w7 == 1 ~ "twice.poor",
+      poverty.bn.w7 == 0 & wealth.poverty.bn.w7 == 1 ~ "not.poor.but.nowealth",
+      poverty.bn.w7 == 1 & wealth.poverty.bn.w7 == 0 ~ "income.poor.but.wealth",
+      poverty.bn.w7 == 0 & wealth.poverty.bn.w7 == 0 ~ "not.poor",
+      TRUE ~ NA_character_
+    ),
+    joint.income.wealth.poverty.bn.w8 = case_when(
+      poverty.bn.w8 == 1 & wealth.poverty.bn.w8 == 1 ~ "twice.poor",
+      poverty.bn.w8 == 0 & wealth.poverty.bn.w8 == 1 ~ "not.poor.but.nowealth",
+      poverty.bn.w8 == 1 & wealth.poverty.bn.w8 == 0 ~ "income.poor.but.wealth",
+      poverty.bn.w8 == 0 & wealth.poverty.bn.w8 == 0 ~ "not.poor",
+      TRUE ~ NA_character_
+    ),
+    joint.income.wealth.poverty.bn.w9 = case_when(
+      poverty.bn.w9 == 1 & wealth.poverty.bn.w9 == 1 ~ "twice.poor",
+      poverty.bn.w9 == 0 & wealth.poverty.bn.w9 == 1 ~ "not.poor.but.nowealth",
+      poverty.bn.w9 == 1 & wealth.poverty.bn.w9 == 0 ~ "income.poor.but.wealth",
+      poverty.bn.w9 == 0 & wealth.poverty.bn.w9 == 0 ~ "not.poor",
+      TRUE ~ NA_character_
+    )
+  )
+
+table(data$joint.income.wealth.poverty.bn.w6)
+prop.table(table(data$joint.income.wealth.poverty.bn.w6))
+
+
+#creating a binary variable for participation in wave effects 
+
+# Create binary variables indicating valid information for each wave
+# Define the waves included in the dataset
+# Define the waves included in the dataset
+waves <- c(2, 4, 5, 6, 7, 8, 9)
+
+# Create binary variables indicating valid information for each wave
+data <- data %>%
+  mutate(across(
+    all_of(paste0("joint.income.wealth.poverty.bn.w", waves)),
+    ~ as.integer(!is.na(.)),
+    .names = "valid.information.w{col}"
+  ))
+
+
+data$valid.information.wjoint.income.wealth.poverty.bn.w2
+
 # setting up the covariates (from the g2a file)
 
 #education 
@@ -424,6 +609,10 @@ data <- data %>%
 
 summary(data$edu.rcd)
 length(which(is.na(data$edu.rcd)))
+
+#education years 
+data <- data %>% mutate(eduyears = raedyrs)
+data$eduyears
 
 #gender
 data <- data %>% 
@@ -439,6 +628,73 @@ data <- data %>%
     racitizen == 0 ~ "Foreigner",
     racitizen == 1  ~ "Swiss"))) 
 table(data$is.swiss)
+
+
+# load isco work codings
+
+load(file="data_isco-job-codings.Rdata")
+isco_wide <- isco_wide %>% select(mergeid,highest_lifetime_ISCO_88_recoded ) 
+
+data <- data %>%
+  left_join(isco_wide, by = "mergeid")
+
+data$highest_lifetime_ISCO_88_recoded <- relevel(as.factor(data$highest_lifetime_ISCO_88_recoded), ref="medium")
+
+# calculate cohort 
+
+table(data$rabyear)
+
+data <- data %>%
+  mutate(cohort = case_when(
+    rabyear >= 1910 & rabyear < 1920 ~ "1910-1919",
+    rabyear >= 1920 & rabyear < 1930 ~ "1920-1929",
+    rabyear >= 1930 & rabyear < 1940 ~ "1930-1939",
+    rabyear >= 1940 & rabyear < 1950 ~ "1940-1949",
+    rabyear >= 1950 & rabyear < 1960 ~ "1950-1959",
+    rabyear >= 1960 & rabyear < 1970 ~ "1960-1969",
+    rabyear >= 1970 & rabyear < 1980 ~ "1970-1979",
+    TRUE ~ NA_character_  # Assign NA if outside the range
+  ))
+
+
+load(file="data_poverty.trajectories.clusters.Rdata")
+poverty.trajectories.clusters
+data <- data %>%  left_join(poverty.trajectories.clusters, by="mergeid")
+data$poverty.trajectories.clusters
+
+clusters <- levels(as.factor(data$poverty.trajectories.clusters))
+library(dplyr)
+
+# Define a function to clean and format names safely without regex
+clean_name <- function(name) {
+  name <- gsub(" ", "_", name, fixed = TRUE)
+  name <- gsub("/", "_", name, fixed = TRUE)
+  name <- gsub("-", "_", name, fixed = TRUE)
+  return(name)
+}
+
+# Ensure poverty.trajectories.clusters is a factor
+if (!is.factor(data$poverty.trajectories.clusters)) {
+  data <- data %>% mutate(poverty.trajectories.clusters = as.factor(poverty.trajectories.clusters))
+}
+
+# Extract unique levels from the factor variable
+cluster_levels <- levels(data$poverty.trajectories.clusters)
+
+# Create binary indicators and store them as new columns in a dataframe
+binary_df <- as.data.frame(sapply(cluster_levels, function(cluster) {
+  as.integer(data$poverty.trajectories.clusters == cluster)
+}))
+
+# Rename the columns appropriately
+colnames(binary_df) <- paste0("POV.CLUST.", sapply(cluster_levels, clean_name))
+
+# Bind new binary variables to the original dataframe
+data <- bind_cols(data, binary_df)
+
+data$POV.CLUST.Mainly_economically_vulnerable
+
+
 
 
 # save --------------------------------------------------------------------

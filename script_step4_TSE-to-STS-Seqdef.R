@@ -113,20 +113,33 @@ alphabet=c("0", "1", "missing", "not.observed")
 states=c("Not poor", "Poor", "Missing Info", "Not observed")
 
 # pov.seq <- seqdef(sts[,21:71], informat="STS", states = states, alphabet = alphabet, start= 50 ) # this imports sequence from 50
-pov.seq <- seqdef(sts[,36:70], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
+tra.seq <- seqdef(sts[,36:70], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
 
+
+
+# pov.seq <- seqdef(sts[,21:71], informat="STS", states = states, alphabet = alphabet, start= 50 ) # this imports sequence from 50
+tra.seq <- seqdef(sts[,36:51], informat="STS", states = states, alphabet = alphabet, start= 50  ) 
+
+seqdplot(tra.seq)
 
 # subsetting useless observations -----------------------------------------
 
+save(tra.seq, file="data_step4-out_trajectories-STS.Rdata")
+
 # subsetting --------------------------------------------------------------
+
+pov.seq <- tra.seq 
 
 results <- seqistatd(pov.seq)
 results <- as.data.frame(results)
 names(results)
 
-filter <- which(results$`Not observed`==35)
-length(filter)
-pov.seq <- pov.seq[-filter,]
+
+# filter <- which(results$`Not observed`==20
+#                 )
+# length(filter)
+# pov.seq <- pov.seq[-filter,]
+
 
 results <- seqistatd(pov.seq)
 results <- as.data.frame(results)
@@ -137,9 +150,6 @@ length(filter)
 pov.seq <- pov.seq[-filter,]
 
 
-
-seqiplot(pov.seq)
-seqdplot(pov.seq)
 
 save(pov.seq, file="data_step4-out_pov-STS.Rdata")
 

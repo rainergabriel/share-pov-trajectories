@@ -210,3 +210,191 @@ stargazer(
   dep.var.caption = "Poverty Trajectory Type - Not Poor but No Wealth & Transition to Not Poor",
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
+
+
+
+
+# Average Marginal effect displays ----------------------------------------
+# Load required libraries
+library(margins)
+library(ggplot2)
+library(dplyr)
+library(broom)
+
+# Function to calculate predicted probabilities with significance
+calculate_predicted_probs <- function() {
+  # Specify the models and variables of interest
+  models_info <- list(
+    list(
+      model = m3_twp, 
+      trajectory = "Twice Poor", 
+      variable = "eduyears",
+      display_name = "Years of education"
+    ),
+    list(
+      model = m4_twp, 
+      trajectory = "Twice Poor", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    ),
+    list(
+      model = m3_ipw, 
+      trajectory = "Income Poor but Wealthy", 
+      variable = "eduyears",
+      display_name = "Years of education"
+    ),
+    list(
+      model = m4_ipw, 
+      trajectory = "Income Poor but Wealthy", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    ),
+    list(
+      model = m3_npbnw, 
+      trajectory = "Not Poor but No Wealth", 
+      variable = "eduyears",
+      display_name = "Years of education"
+    ),
+    list(
+      model = m4_npbnw, 
+      trajectory = "Not Poor but No Wealth", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    ),
+    list(
+      model = m3_np, 
+      trajectory = "Not Poor", 
+      variable = "eduyears",
+      display_name = "Years of education"
+    ),
+    list(
+      model = m4_np, 
+      trajectory = "Not Poor", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    )
+  )
+  
+  # Calculate predicted probabilities and significance
+  results <- lapply(models_info, function(model_info) {
+    # Get model and variable name
+    model <- model_info$model
+    var_name <- model_info$variable
+    display_name <- model_info$display_name
+    
+    # Get model frame
+    pred_data <- model.frame(model)
+    
+    # Conduct statistical test
+    model_summary <- tidy(model)
+    
+    # For categorical variables, we need to check all levels
+    if (is.factor(pred_data[[var_name]])) {
+      # Get all terms related to this variable
+      var_terms <- model_summary %>% 
+        filter(grepl(paste0("^", var_name), term))
+      
+      # Check if any of these terms are significant
+      is_significant <- any(var_terms$p.value < 0.05)
+      
+      # Predict for each level of the categorical variable
+      pred_probs <- tapply(predict(model, type = "response"), 
+                           pred_data[[var_name]], 
+                           mean)
+      
+      # Rename the levels
+      level_names <- names(pred_probs)
+      display_levels <- level_names
+      
+      # Rename specific levels if they match
+      for (i in 1:length(level_names)) {
+        if (level_names[i] == "high") display_levels[i] <- "Highly skilled"
+        if (level_names[i] == "low") display_levels[i] <- "Low skill"
+        if (level_names[i] == "medium") display_levels[i] <- "Medium"
+      }
+      
+      # Create a data frame with one row per level
+      result_df <- data.frame(
+        Trajectory = rep(model_info$trajectory, length(pred_probs)),
+        Variable = rep(display_name, length(pred_probs)),
+        Level = display_levels,
+        PredictedProbability = as.numeric(pred_probs),
+        Significant = rep(is_significant, length(pred_probs))
+      )
+      
+      return(result_df)
+    } else {
+      # For continuous variables
+      var_sig <- model_summary %>% 
+        filter(term == var_name) %>% 
+        mutate(significant = p.value < 0.05)
+      
+      # If no matching term was found, set significance to FALSE
+      if(nrow(var_sig) == 0) {
+        is_significant <- FALSE
+      } else {
+        is_significant <- var_sig$significant
+      }
+      
+      # Return a single row for continuous variables
+      return(data.frame(
+        Trajectory = model_info$trajectory,
+        Variable = display_name,
+        Level = "Mean",
+        PredictedProbability = mean(predict(model, type = "response")),
+        Significant = is_significant
+      ))
+    }
+  })
+  
+  # Combine results
+  do.call(rbind, results)
+}
+
+# Calculate predicted probabilities
+prob_results <- calculate_predicted_probs()
+
+# Create the plot
+ggplot(prob_results, aes(
+  x = Level, 
+  y = PredictedProbability, 
+  fill = Significant,
+  color = Significant
+)) +
+  geom_bar(
+    stat = "identity", 
+    position = position_dodge(width = 0.9), 
+    aes(alpha = Significant)
+  ) +
+  geom_point(
+    position = position_dodge(width = 0.9), 
+    size = 3,
+    aes(color = Significant)
+  ) +
+  scale_fill_manual(
+    values = c("TRUE" = "black", "FALSE" = "gray80"),
+    guide = "none"
+  ) +
+  scale_color_manual(
+    values = c("TRUE" = "black", "FALSE" = "gray80"),
+    guide = "none"
+  ) +
+  scale_alpha_manual(
+    values = c("TRUE" = 1, "FALSE" = 0.5),
+    guide = "none"
+  ) +
+  labs(
+    title = "Predicted Probabilities by Trajectory and Variable",
+    subtitle = "Black indicates statistically significant effects (p < 0.05)",
+    x = "Level",
+    y = "Predicted Probability"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  facet_wrap(~ Trajectory + Variable, ncol = 2, scales = "free_x")
+
+# Print out the exact values with significance
+print(prob_results)

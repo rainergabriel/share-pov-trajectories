@@ -76,12 +76,15 @@ clustresults[filter] <- "Mainly missing / not observed"
 
 
 clustresults[clustresults=="2768"] <- "Mainly protected poor"
-clustresults[clustresults=="332"] <- "Mainly Non-poor"
-clustresults[clustresults=="4"] <- "Non-poor or protected-poor then not observed"
-clustresults[clustresults=="4820"] <- "Mainly non-poor then not observed"
+filter <- which (clustresults=="332"| 
+                clustresults=="4820"|
+                  clustresults=="849" |
+                  clustresults=="952" |
+                    clustresults=="4")
+clustresults[filter] <- "Mainly non-poor and missing"
+
 clustresults[clustresults=="4873"] <- "Mainly economically vulnerable"
-clustresults[clustresults=="849"] <- "Missing / not observed to non-poor"
-clustresults[clustresults=="952"] <- "Mainly missing to non-poor"
+
 
 seqdplot(tra.seq, group= clustresults, with.legend=FALSE)
 
@@ -153,6 +156,7 @@ poverty.trajectories.clusters <- as_tibble(poverty.trajectories.clusters)
 names(poverty.trajectories.clusters) <- c("mergeid", "poverty.trajectories.clusters")
 
 head(poverty.trajectories.clusters)
+levels(as.factor(poverty.trajectories.clusters$poverty.trajectories.clusters))
 
 save(poverty.trajectories.clusters, file="data_poverty.trajectories.clusters.Rdata")
 

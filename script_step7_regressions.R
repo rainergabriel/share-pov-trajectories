@@ -65,6 +65,23 @@ stargazer(
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
 
+
+stargazer(
+  m1_vuln, m2_vuln, m3_vuln, m4_vuln,
+  coef = list(coef_m1_vuln, coef_m2_vuln, coef_m3_vuln, coef_m4_vuln),
+  type = "html", 
+  out = "stargazer_cluster-membership_FINAL_econ-vulnerable.html",
+  report = "vc*",
+  omit = c("valid*", "cohort*", "Constant", "gender*"),
+  single.row = TRUE,
+  p.auto = FALSE,
+  digits = 2,
+  dep.var.labels = "Mainly economically vulnerable", 
+  dep.var.caption = "Poverty trajectory type",
+  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
+)
+
+
 # --- POV.CLUST.Mainly_missing___not_observed ---
 m1_miss <- glm(POV.CLUST.Mainly_missing___not_observed ~ eduyears, family = "binomial", data = data)
 m2_miss <- glm(POV.CLUST.Mainly_missing___not_observed ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
@@ -106,10 +123,25 @@ stargazer(
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
 
-# --- POV.CLUST.Mainly_missing_to_non_poor ---
-m1_mtp <- glm(POV.CLUST.Mainly_missing_to_non_poor ~ eduyears, family = "binomial", data = data)
-m2_mtp <- glm(POV.CLUST.Mainly_missing_to_non_poor ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_mtp <- glm(POV.CLUST.Mainly_missing_to_non_poor ~ eduyears + cohort + gender.rcd +
+stargazer(
+  m1_miss, m2_miss, m3_miss, m4_miss,
+  coef = list(coef_m1_miss, coef_m2_miss, coef_m3_miss, coef_m4_miss),
+  type = "html", 
+  out = "stargazer_cluster_FINAL_membership_missing.html",
+  report = "vc*",
+  omit = c("valid*", "cohort*", "Constant", "gender*"),
+  single.row = TRUE,
+  p.auto = FALSE,
+  digits = 2,
+  dep.var.labels = "Variations of missing / not observed", 
+  dep.var.caption = "Poverty trajectory type",
+  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
+)
+
+# --- POV.CLUST.Mainly_Non_poor ---
+m1_mtp <- glm(POV.CLUST.Mainly_Non_poor ~ eduyears, family = "binomial", data = data)
+m2_mtp <- glm(POV.CLUST.Mainly_Non_poor ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
+m3_mtp <- glm(POV.CLUST.Mainly_Non_poor ~ eduyears + cohort + gender.rcd +
                 valid.information.wjoint.income.wealth.poverty.bn.w2 +
                 valid.information.wjoint.income.wealth.poverty.bn.w4 +
                 valid.information.wjoint.income.wealth.poverty.bn.w5 +
@@ -117,7 +149,7 @@ m3_mtp <- glm(POV.CLUST.Mainly_missing_to_non_poor ~ eduyears + cohort + gender.
                 valid.information.wjoint.income.wealth.poverty.bn.w7 +
                 valid.information.wjoint.income.wealth.poverty.bn.w8 +
                 valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-m4_mtp <- glm(POV.CLUST.Mainly_missing_to_non_poor ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
+m4_mtp <- glm(POV.CLUST.Mainly_Non_poor ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
                 valid.information.wjoint.income.wealth.poverty.bn.w2 +
                 valid.information.wjoint.income.wealth.poverty.bn.w4 +
                 valid.information.wjoint.income.wealth.poverty.bn.w5 +
@@ -145,89 +177,22 @@ stargazer(
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
 
-
-library(stargazer)
-
-# --- POV.CLUST.Mainly_economically_vulnerable ---
-m1_vuln <- glm(POV.CLUST.Mainly_economically_vulnerable ~ eduyears, family = "binomial", data = data)
-m2_vuln <- glm(POV.CLUST.Mainly_economically_vulnerable ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_vuln <- glm(POV.CLUST.Mainly_economically_vulnerable ~ eduyears + cohort + gender.rcd +
-                 valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-m4_vuln <- glm(POV.CLUST.Mainly_economically_vulnerable ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-                 valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-
-coef_m1_vuln <- exp(coef(m1_vuln))
-coef_m2_vuln <- exp(coef(m2_vuln))
-coef_m3_vuln <- exp(coef(m3_vuln))
-coef_m4_vuln <- exp(coef(m4_vuln))
-
 stargazer(
-  m1_vuln, m2_vuln, m3_vuln, m4_vuln,
-  coef = list(coef_m1_vuln, coef_m2_vuln, coef_m3_vuln, coef_m4_vuln),
-  type = "text", 
-  report = "vc*",
+  m1_mtp, m2_mtp, m3_mtp, m4_mtp,
+  coef = list(coef_m1_mtp, coef_m2_mtp, coef_m3_mtp, coef_m4_mtp),
+  type = "html", 
+  out = "stargazer_cluster-membership_FINAL_non-poor.html",  report = "vc*",
   omit = c("valid*", "cohort*", "Constant", "gender*"),
   single.row = TRUE,
   p.auto = FALSE,
   digits = 2,
-  dep.var.labels = "Mainly economically vulnerable", 
+  dep.var.labels = "Mainly non-poor", 
   dep.var.caption = "Poverty trajectory type",
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
-
-# --- POV.CLUST.Mainly_non_poor_then_not_observed ---
-m1_npno <- glm(POV.CLUST.Mainly_non_poor_then_not_observed ~ eduyears, family = "binomial", data = data)
-m2_npno <- glm(POV.CLUST.Mainly_non_poor_then_not_observed ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_npno <- glm(POV.CLUST.Mainly_non_poor_then_not_observed ~ eduyears + cohort + gender.rcd +
-                 valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-m4_npno <- glm(POV.CLUST.Mainly_non_poor_then_not_observed ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-                 valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-
-coef_m1_npno <- exp(coef(m1_npno))
-coef_m2_npno <- exp(coef(m2_npno))
-coef_m3_npno <- exp(coef(m3_npno))
-coef_m4_npno <- exp(coef(m4_npno))
-
-stargazer(
-  m1_npno, m2_npno, m3_npno, m4_npno,
-  coef = list(coef_m1_npno, coef_m2_npno, coef_m3_npno, coef_m4_npno),
-  type = "text", 
-  report = "vc*",
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.labels = "Mainly non-poor then not observed", 
-  dep.var.caption = "Poverty trajectory type",
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
-
 
 library(stargazer)
+
 
 # --- POV.CLUST.Mainly_economically_vulnerable ---
 # Models and stargazer table already included
@@ -274,186 +239,204 @@ stargazer(
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
 
-# --- POV.CLUST.Missing___not_observed_to_non_poor ---
-m1_mnp <- glm(POV.CLUST.Missing___not_observed_to_non_poor ~ eduyears, family = "binomial", data = data)
-m2_mnp <- glm(POV.CLUST.Missing___not_observed_to_non_poor ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_mnp <- glm(POV.CLUST.Missing___not_observed_to_non_poor ~ eduyears + cohort + gender.rcd +
-                valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-m4_mnp <- glm(POV.CLUST.Missing___not_observed_to_non_poor ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-                valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-
-coef_m1_mnp <- exp(coef(m1_mnp))
-coef_m2_mnp <- exp(coef(m2_mnp))
-coef_m3_mnp <- exp(coef(m3_mnp))
-coef_m4_mnp <- exp(coef(m4_mnp))
-
 stargazer(
-  m1_mnp, m2_mnp, m3_mnp, m4_mnp,
-  coef = list(coef_m1_mnp, coef_m2_mnp, coef_m3_mnp, coef_m4_mnp),
-  type = "text", 
-  report = "vc*",
+  m1_pp, m2_pp, m3_pp, m4_pp,
+  coef = list(coef_m1_pp, coef_m2_pp, coef_m3_pp, coef_m4_pp),
+  type = "html", 
+  out = "stargazer_cluster-membership_FINAL_protected-poor.html",  report = "vc*",
   omit = c("valid*", "cohort*", "Constant", "gender*"),
   single.row = TRUE,
   p.auto = FALSE,
   digits = 2,
-  dep.var.labels = "Missing / not observed to non-poor", 
+  dep.var.labels = "Mainly protected poor", 
   dep.var.caption = "Poverty trajectory type",
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
 
-# Remaining variables:
-# POV.CLUST.Non_poor_or_protected_poor_then_not_observed
-# Repeat this block structure for each remaining variable with appropriate model names.
 
-library(stargazer)
+# create plot -------------------------------------------------------------
 
-# --- POV.CLUST.Mainly_economically_vulnerable ---
-# Models and stargazer table already included
+# Predicted Probabilities ----------------------------------------
+# Load required libraries
+library(margins)
+library(ggplot2)
+library(dplyr)
+library(broom)
 
-# --- POV.CLUST.Mainly_non_poor_then_not_observed ---
-# Models and stargazer table already included
-
-# --- POV.CLUST.Mainly_protected_poor ---
-# Models and stargazer table already included
-
-# --- POV.CLUST.Missing___not_observed_to_non_poor ---
-# Models and stargazer table already included
-
-# --- POV.CLUST.Non_poor_or_protected_poor_then_not_observed ---
-m1_npp <- glm(POV.CLUST.Non_poor_or_protected_poor_then_not_observed ~ eduyears, family = "binomial", data = data)
-m2_npp <- glm(POV.CLUST.Non_poor_or_protected_poor_then_not_observed ~ highest_lifetime_ISCO_88_recoded, family = "binomial", data = data)
-m3_npp <- glm(POV.CLUST.Non_poor_or_protected_poor_then_not_observed ~ eduyears + cohort + gender.rcd +
-                valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-m4_npp <- glm(POV.CLUST.Non_poor_or_protected_poor_then_not_observed ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-                valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                valid.information.wjoint.income.wealth.poverty.bn.w9, family = "binomial", data = data)
-
-coef_m1_npp <- exp(coef(m1_npp))
-coef_m2_npp <- exp(coef(m2_npp))
-coef_m3_npp <- exp(coef(m3_npp))
-coef_m4_npp <- exp(coef(m4_npp))
-
-stargazer(
-  m1_npp, m2_npp, m3_npp, m4_npp,
-  coef = list(coef_m1_npp, coef_m2_npp, coef_m3_npp, coef_m4_npp),
-  type = "text", 
-  report = "vc*",
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.labels = "Non-poor or protected poor then not observed", 
-  dep.var.caption = "Poverty trajectory type",
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
-
-# All variables have now been included in the analysis.
-
-
-
-# consolidated table   -------------------------------------------------------------
-
-library(stargazer)
-
-# Export consolidated tables as HTML
-
-
-library(stargazer)
-
-# Function to exponentiate model coefficients
-exp_model_coeffs <- function(model) {
-  model$coefficients <- exp(model$coefficients)
-  return(model)
+# Function to calculate predicted probabilities with significance
+calculate_predicted_probs <- function() {
+  # Specify the models and variables of interest
+  models_info <- list(
+    list(
+      model = m3_vuln, 
+      trajectory = "Mainly economically vulnerable", 
+      variable = "eduyears",
+      display_name = "Years of education"
+    ),
+    list(
+      model = m4_vuln, 
+      trajectory = "Mainly economically vulnerable", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    ),
+    list(
+      model = m3_miss, 
+      trajectory = "Mainly missing / not observed", 
+      variable = "eduyears",
+      display_name = "Years of education"
+    ),
+    list(
+      model = m4_miss, 
+      trajectory = "Mainly missing / not observed", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    ),
+    list(
+      model = m3_mtp, 
+      trajectory = "Mainly Non-poor", 
+      variable = "eduyears",
+      display_name = "Years of education"
+    ),
+    list(
+      model = m4_mtp, 
+      trajectory = "Mainly Non-poor", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    ),
+    list(
+      model = m3_pp, 
+      trajectory = "Mainly protected poor", 
+      variable = "eduyears",
+      display_name = "Years of education"
+    ),
+    list(
+      model = m4_pp, 
+      trajectory = "Mainly protected poor", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    )
+  )
+  
+  # Calculate predicted probabilities and significance
+  results <- lapply(models_info, function(model_info) {
+    # Get model and variable name
+    model <- model_info$model
+    var_name <- model_info$variable
+    display_name <- model_info$display_name
+    
+    # Get model frame
+    pred_data <- model.frame(model)
+    
+    # Conduct statistical test
+    model_summary <- tidy(model)
+    
+    # For categorical variables, we need to check all levels
+    if (is.factor(pred_data[[var_name]])) {
+      # Get all terms related to this variable
+      var_terms <- model_summary %>% 
+        filter(grepl(paste0("^", var_name), term))
+      
+      # Check if any of these terms are significant
+      is_significant <- any(var_terms$p.value < 0.05)
+      
+      # Predict for each level of the categorical variable
+      pred_probs <- tapply(predict(model, type = "response"), 
+                           pred_data[[var_name]], 
+                           mean)
+      
+      # Rename the levels
+      level_names <- names(pred_probs)
+      display_levels <- level_names
+      
+      # Rename specific levels if they match
+      for (i in 1:length(level_names)) {
+        if (level_names[i] == "high") display_levels[i] <- "Highly skilled"
+        if (level_names[i] == "low") display_levels[i] <- "Low skill"
+        if (level_names[i] == "medium") display_levels[i] <- "Medium"
+      }
+      
+      # Create a data frame with one row per level
+      result_df <- data.frame(
+        Trajectory = rep(model_info$trajectory, length(pred_probs)),
+        Variable = rep(display_name, length(pred_probs)),
+        Level = display_levels,
+        PredictedProbability = as.numeric(pred_probs),
+        Significant = rep(is_significant, length(pred_probs))
+      )
+      
+      return(result_df)
+    } else {
+      # For continuous variables
+      var_sig <- model_summary %>% 
+        filter(term == var_name) %>% 
+        mutate(significant = p.value < 0.05)
+      
+      # If no matching term was found, set significance to FALSE
+      if(nrow(var_sig) == 0) {
+        is_significant <- FALSE
+      } else {
+        is_significant <- var_sig$significant
+      }
+      
+      # Return a single row for continuous variables
+      return(data.frame(
+        Trajectory = model_info$trajectory,
+        Variable = display_name,
+        Level = "Mean",
+        PredictedProbability = mean(predict(model, type = "response")),
+        Significant = is_significant
+      ))
+    }
+  })
+  
+  # Combine results
+  do.call(rbind, results)
 }
 
-# Shorten model names and exponentiate coefficients
-m1_1 <- exp_model_coeffs(m1_vuln); m2_1 <- exp_model_coeffs(m2_vuln); m3_1 <- exp_model_coeffs(m3_vuln); m4_1 <- exp_model_coeffs(m4_vuln);
-m1_2 <- exp_model_coeffs(m1_miss); m2_2 <- exp_model_coeffs(m2_miss); m3_2 <- exp_model_coeffs(m3_miss); m4_2 <- exp_model_coeffs(m4_miss);
-m1_3 <- exp_model_coeffs(m1_mtp); m2_3 <- exp_model_coeffs(m2_mtp); m3_3 <- exp_model_coeffs(m3_mtp); m4_3 <- exp_model_coeffs(m4_mtp);
-m1_4 <- exp_model_coeffs(m1_npno); m2_4 <- exp_model_coeffs(m2_npno); m3_4 <- exp_model_coeffs(m3_npno); m4_4 <- exp_model_coeffs(m4_npno);
-m1_5 <- exp_model_coeffs(m1_pp); m2_5 <- exp_model_coeffs(m2_pp); m3_5 <- exp_model_coeffs(m3_pp); m4_5 <- exp_model_coeffs(m4_pp);
-m1_6 <- exp_model_coeffs(m1_mnp); m2_6 <- exp_model_coeffs(m2_mnp); m3_6 <- exp_model_coeffs(m3_mnp); m4_6 <- exp_model_coeffs(m4_mnp);
-m1_7 <- exp_model_coeffs(m1_npp); m2_7 <- exp_model_coeffs(m2_npp); m3_7 <- exp_model_coeffs(m3_npp); m4_7 <- exp_model_coeffs(m4_npp);
+# Calculate predicted probabilities
+prob_results <- calculate_predicted_probs()
 
-# --- Consolidated Table 1: Indicators 1-2 ---
-stargazer(
-  m1_1, m2_1, m3_1, m4_1,
-  m1_2, m2_2, m3_2, m4_2,
-  type = "html", 
-  out = "stargazer_table_1.html",
-  report = "vc*",
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.caption = "Poverty Trajectory Type - Indicators 1-2",
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
+# Create the plot
+ggplot(prob_results, aes(
+  x = Level, 
+  y = PredictedProbability, 
+  fill = Significant,
+  color = Significant
+)) +
+  geom_bar(
+    stat = "identity", 
+    position = position_dodge(width = 0.9), 
+    aes(alpha = Significant)
+  ) +
+  geom_point(
+    position = position_dodge(width = 0.9), 
+    size = 3,
+    aes(color = Significant)
+  ) +
+  scale_fill_manual(
+    values = c("TRUE" = "black", "FALSE" = "gray80"),
+    guide = "none"
+  ) +
+  scale_color_manual(
+    values = c("TRUE" = "black", "FALSE" = "gray80"),
+    guide = "none"
+  ) +
+  scale_alpha_manual(
+    values = c("TRUE" = 1, "FALSE" = 0.5),
+    guide = "none"
+  ) +
+  labs(
+    title = "Predicted Probabilities by Transition Experience (Transitioning into a Given State) and Variable",
+    subtitle = "Black indicates statistically significant effects (p < 0.05)",
+    x = "Level",
+    y = "Predicted Probability"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  facet_wrap(~ Trajectory + Variable, ncol = 2, scales = "free_x")
 
-# --- Consolidated Table 2: Indicators 3-4 ---
-stargazer(
-  m1_3, m2_3, m3_3, m4_3,
-  m1_4, m2_4, m3_4, m4_4,
-  type = "html", 
-  out = "stargazer_table_2.html",
-  report = "vc*",
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.caption = "Poverty Trajectory Type - Indicators 3-4",
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
-
-# --- Consolidated Table 3: Indicators 5-6 ---
-stargazer(
-  m1_5, m2_5, m3_5, m4_5,
-  m1_6, m2_6, m3_6, m4_6,
-  type = "html", 
-  out = "stargazer_table_3.html",
-  report = "vc*",
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.caption = "Poverty Trajectory Type - Indicators 5-6",
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
-
-# --- Consolidated Table 4: Indicators 7-8 ---
-stargazer(
-  m1_7, m2_7, m3_7, m4_7,
-  type = "html", 
-  out = "stargazer_table_4.html",
-  report = "vc*",
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.caption = "Poverty Trajectory Type - Indicators 7-8",
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
-
+# Print out the exact values with significance
+print(prob_results)

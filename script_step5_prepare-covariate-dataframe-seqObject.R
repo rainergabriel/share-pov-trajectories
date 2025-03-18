@@ -5,7 +5,6 @@ library(tidyverse)
 library(dplyr)
 
 rm(list = ls())
-load(file="data_step4-out_pov-STS.Rdata")
 load(file="data_step4-out_trajectories-STS.Rdata")
 load(file="data_covariates-sts.Rdata")
 load(file="data_step3-out-variables-all-setup.Rdata")
@@ -23,15 +22,19 @@ ids <- rownames(tra.seq)
 cov.container <- as_tibble(ids)
 names(cov.container) <- "mergeid"
 
+data$cohort
+
 covs.from.data <- data %>% select(
   mergeid,
   gender.rcd, 
   is.swiss, 
-  edu.rcd
+  edu.rcd, 
+  cohort
 )
 
 cov.data.tra <- left_join(cov.container, covs.from.data, by="mergeid")
 
+table(cov.data.tra$cohort)
 
 # saving ------------------------------------------------------------------
 

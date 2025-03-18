@@ -21,7 +21,7 @@ load(file="data_step4-out_trajectories-STS.Rdata")
 load(file="data_covariates-pov-sts.Rdata")
 load( file="data_covariates-tra-sts.Rdata")
 
-
+  
 
 # all sequences -----------------------------------------------------------
 
@@ -39,6 +39,7 @@ tra.seqdist <- seqdist(tra.seq, method="OM", sm = trans_cost)#clustering using O
 
 trawc <- wcKMedRange(tra.seqdist,kvals=2:20)
 trawc
+plot(trawc)
 table <- trawc
 table <- as_data_frame(table)
 
@@ -62,28 +63,34 @@ clustresults <- trawc$clustering$cluster15
 
 
 
-filter <- which (clustresults == 1 |
-                   clustresults == 4749 |
-                   clustresults == 4766 |
-                   clustresults == 4868 |
-                   clustresults == 4868 |
-                   clustresults == 4895 |
-                   clustresults == 4899 |
-                   clustresults == 58 |
-                 clustresults == 4904 )
+filter <- which (clustresults == 13 |
+                   clustresults == 20 |
+                   clustresults == 3726 |
+                   clustresults == 3734 |
+                   clustresults == 3735 |
+                   clustresults == 52 |
+                   clustresults == 65 |
+                   clustresults == 85 )
 clustresults[filter] <- "Mainly missing / not observed"
 
+seqdplot(tra.seq, group= clustresults)
 
 
-clustresults[clustresults=="2768"] <- "Mainly protected poor"
-filter <- which (clustresults=="332"| 
-                clustresults=="4820"|
-                  clustresults=="849" |
-                  clustresults=="952" |
-                    clustresults=="4")
+
+
+clustresults[clustresults=="2123"] <- "Mainly protected poor"
+filter <- which (clustresults=="244"| 
+                clustresults=="42"|
+                  clustresults=="47" |
+                  clustresults=="630" |
+                    clustresults=="706"|
+                  clustresults=="3739")
 clustresults[filter] <- "Mainly non-poor and missing"
 
-clustresults[clustresults=="4873"] <- "Mainly economically vulnerable"
+seqdplot(tra.seq, group= clustresults)
+
+
+clustresults[clustresults=="3712"] <- "Mainly economically vulnerable"
 
 
 seqdplot(tra.seq, group= clustresults, with.legend=FALSE)

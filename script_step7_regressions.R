@@ -172,7 +172,7 @@ stargazer(
   single.row = TRUE,
   p.auto = FALSE,
   digits = 2,
-  dep.var.labels = "Mainly missing to non-poor", 
+  dep.var.labels = "Mainly non-poor", 
   dep.var.caption = "Poverty trajectory type",
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
@@ -255,29 +255,23 @@ stargazer(
 
 
 # create plot -------------------------------------------------------------
-
-# Predicted Probabilities ----------------------------------------
 # Load required libraries
-library(margins)
 library(ggplot2)
 library(dplyr)
 library(broom)
+library(tidyr)
+library(patchwork)
 
-# Function to calculate predicted probabilities with significance
+# Function to calculate predicted probabilities with proper significance
 calculate_predicted_probs <- function() {
-  # Specify the models and variables of interest
-  models_info <- list(
+  # Part 1: Education continuous curves
+  # Specify the education models
+  edu_models_info <- list(
     list(
       model = m3_vuln, 
       trajectory = "Mainly economically vulnerable", 
       variable = "eduyears",
       display_name = "Years of education"
-    ),
-    list(
-      model = m4_vuln, 
-      trajectory = "Mainly economically vulnerable", 
-      variable = "highest_lifetime_ISCO_88_recoded",
-      display_name = "Highest lifetime ISCO-88"
     ),
     list(
       model = m3_miss, 
@@ -286,28 +280,87 @@ calculate_predicted_probs <- function() {
       display_name = "Years of education"
     ),
     list(
-      model = m4_miss, 
-      trajectory = "Mainly missing / not observed", 
-      variable = "highest_lifetime_ISCO_88_recoded",
-      display_name = "Highest lifetime ISCO-88"
-    ),
-    list(
       model = m3_mtp, 
       trajectory = "Mainly Non-poor", 
       variable = "eduyears",
       display_name = "Years of education"
     ),
     list(
-      model = m4_mtp, 
-      trajectory = "Mainly Non-poor", 
-      variable = "highest_lifetime_ISCO_88_recoded",
-      display_name = "Highest lifetime ISCO-88"
-    ),
-    list(
       model = m3_pp, 
       trajectory = "Mainly protected poor", 
       variable = "eduyears",
       display_name = "Years of education"
+    )
+  )
+  
+  # Calculate predictions for education models
+  edu_results <- lapply(edu_models_info, function(model_info) {
+    # Get model information
+    model <- model_info$model
+    var_name <- model_info$variable
+    
+    # Get model summary for p-value
+    model_summary <- tidy(model)
+    p_value <- model_summary %>% filter(term == var_name) %>% pull(p.value)
+    is_significant <- !is.null(p_value) && p_value < 0.05
+    
+    # Get data range
+    pred_data <- model.frame(model)
+    min_edu <- floor(min(pred_data[[var_name]]))
+    max_edu <- ceiling(max(pred_data[[var_name]]))
+    
+    # Create a sequence of education years across the range
+    edu_seq <- seq(from = min_edu, to = max_edu, by = 1)
+    
+    # Create prediction dataframes at each education level
+    result_list <- list()
+    
+    for (edu in edu_seq) {
+      # Create prediction dataset
+      new_data <- pred_data
+      new_data[[var_name]] <- rep(edu, nrow(new_data))
+      
+      # Get predictions for all rows
+      preds <- predict(model, newdata = new_data, type = "response")
+      
+      # Calculate mean
+      mean_pred <- mean(preds)
+      
+      result_list[[length(result_list) + 1]] <- data.frame(
+        Trajectory = model_info$trajectory,
+        Variable = model_info$display_name,
+        Years = edu,
+        PredictedProbability = mean_pred,
+        Significant = is_significant
+      )
+    }
+    
+    do.call(rbind, result_list)
+  })
+  
+  # Combine all education results
+  education_df <- do.call(rbind, edu_results)
+  
+  # Part 2: Categorical ISCO predictions
+  # Specify the ISCO models
+  isco_models_info <- list(
+    list(
+      model = m4_vuln, 
+      trajectory = "Mainly economically vulnerable", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    ),
+    list(
+      model = m4_miss, 
+      trajectory = "Mainly missing / not observed", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
+    ),
+    list(
+      model = m4_mtp, 
+      trajectory = "Mainly Non-poor", 
+      variable = "highest_lifetime_ISCO_88_recoded",
+      display_name = "Highest lifetime ISCO-88"
     ),
     list(
       model = m4_pp, 
@@ -317,126 +370,155 @@ calculate_predicted_probs <- function() {
     )
   )
   
-  # Calculate predicted probabilities and significance
-  results <- lapply(models_info, function(model_info) {
+  # Calculate predictions for ISCO models
+  isco_results <- lapply(isco_models_info, function(model_info) {
     # Get model and variable name
     model <- model_info$model
     var_name <- model_info$variable
-    display_name <- model_info$display_name
     
-    # Get model frame
-    pred_data <- model.frame(model)
-    
-    # Conduct statistical test
+    # Get model summary for p-values
     model_summary <- tidy(model)
     
-    # For categorical variables, we need to check all levels
-    if (is.factor(pred_data[[var_name]])) {
-      # Get all terms related to this variable
-      var_terms <- model_summary %>% 
-        filter(grepl(paste0("^", var_name), term))
+    # Get model frame and data
+    pred_data <- model.frame(model)
+    
+    # Get the terms for each level of the categorical variable
+    high_term <- paste0(var_name, "high")
+    low_term <- paste0(var_name, "low")
+    
+    # Get p-values for each level
+    p_high <- model_summary %>% filter(term == high_term) %>% pull(p.value)
+    p_low <- model_summary %>% filter(term == low_term) %>% pull(p.value)
+    
+    # Check significance for each level
+    sig_high <- !is.null(p_high) && p_high < 0.05
+    sig_low <- !is.null(p_low) && p_low < 0.05
+    
+    # Create new data for predictions with specific factor levels
+    new_data_list <- list()
+    levels <- c("high", "medium", "low")
+    
+    for (level in levels) {
+      new_data <- pred_data
+      new_data[[var_name]] <- factor(rep(level, nrow(new_data)), levels = levels)
+      new_data_list[[level]] <- new_data
+    }
+    
+    # Calculate predictions for each level
+    result_df <- data.frame()
+    
+    for (level in levels) {
+      # Get predictions for all observations
+      preds <- predict(model, newdata = new_data_list[[level]], type = "response")
       
-      # Check if any of these terms are significant
-      is_significant <- any(var_terms$p.value < 0.05)
+      # Calculate mean
+      mean_pred <- mean(preds)
       
-      # Predict for each level of the categorical variable
-      pred_probs <- tapply(predict(model, type = "response"), 
-                           pred_data[[var_name]], 
-                           mean)
+      # Determine significance
+      is_significant <- FALSE
+      if (level == "high") is_significant <- sig_high
+      if (level == "low") is_significant <- sig_low
+      # medium is reference, so never marked significant
       
-      # Rename the levels
-      level_names <- names(pred_probs)
-      display_levels <- level_names
+      # Create display name
+      display_level <- level
+      if (level == "high") display_level <- "Highly skilled"
+      if (level == "medium") display_level <- "Medium"
+      if (level == "low") display_level <- "Low skill"
       
-      # Rename specific levels if they match
-      for (i in 1:length(level_names)) {
-        if (level_names[i] == "high") display_levels[i] <- "Highly skilled"
-        if (level_names[i] == "low") display_levels[i] <- "Low skill"
-        if (level_names[i] == "medium") display_levels[i] <- "Medium"
-      }
-      
-      # Create a data frame with one row per level
-      result_df <- data.frame(
-        Trajectory = rep(model_info$trajectory, length(pred_probs)),
-        Variable = rep(display_name, length(pred_probs)),
-        Level = display_levels,
-        PredictedProbability = as.numeric(pred_probs),
-        Significant = rep(is_significant, length(pred_probs))
-      )
-      
-      return(result_df)
-    } else {
-      # For continuous variables
-      var_sig <- model_summary %>% 
-        filter(term == var_name) %>% 
-        mutate(significant = p.value < 0.05)
-      
-      # If no matching term was found, set significance to FALSE
-      if(nrow(var_sig) == 0) {
-        is_significant <- FALSE
-      } else {
-        is_significant <- var_sig$significant
-      }
-      
-      # Return a single row for continuous variables
-      return(data.frame(
+      # Add to results
+      result_df <- rbind(result_df, data.frame(
         Trajectory = model_info$trajectory,
-        Variable = display_name,
-        Level = "Mean",
-        PredictedProbability = mean(predict(model, type = "response")),
+        Variable = model_info$display_name,
+        Level = display_level,
+        PredictedProbability = mean_pred,
         Significant = is_significant
       ))
     }
+    
+    result_df
   })
   
-  # Combine results
-  do.call(rbind, results)
+  # Combine all ISCO results
+  isco_df <- do.call(rbind, isco_results)
+  
+  # Return both datasets
+  list(education_df = education_df, isco_df = isco_df)
 }
 
 # Calculate predicted probabilities
-prob_results <- calculate_predicted_probs()
+results <- calculate_predicted_probs()
+edu_results <- results$education_df
+isco_results <- results$isco_df
 
-# Create the plot
-ggplot(prob_results, aes(
+# Create the combined plot
+# 1. Education curve plot
+edu_plot <- ggplot(edu_results, aes(
+  x = Years, 
+  y = PredictedProbability,
+  color = Significant
+)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(
+    values = c("TRUE" = "black", "FALSE" = "gray50"),
+    guide = "none"
+  ) +
+  labs(
+    x = "Years of Education",
+    y = "Predicted Probability"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(size = 10, face = "bold"),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~ Trajectory, ncol = 2)
+
+# 2. ISCO bar plot with value labels
+isco_plot <- ggplot(isco_results, aes(
   x = Level, 
   y = PredictedProbability, 
-  fill = Significant,
-  color = Significant
+  fill = Significant
 )) +
   geom_bar(
     stat = "identity", 
-    position = position_dodge(width = 0.9), 
-    aes(alpha = Significant)
+    position = position_dodge(width = 0.9),
+    width = 0.7
   ) +
-  geom_point(
-    position = position_dodge(width = 0.9), 
-    size = 3,
-    aes(color = Significant)
+  geom_text(
+    aes(label = scales::percent(PredictedProbability, accuracy = 0.1)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.5,
+    size = 3.5
   ) +
   scale_fill_manual(
     values = c("TRUE" = "black", "FALSE" = "gray80"),
     guide = "none"
   ) +
-  scale_color_manual(
-    values = c("TRUE" = "black", "FALSE" = "gray80"),
-    guide = "none"
-  ) +
-  scale_alpha_manual(
-    values = c("TRUE" = 1, "FALSE" = 0.5),
-    guide = "none"
-  ) +
   labs(
-    title = "Predicted Probabilities by Transition Experience (Transitioning into a Given State) and Variable",
-    subtitle = "Black indicates statistically significant effects (p < 0.05)",
-    x = "Level",
+    x = "",
     y = "Predicted Probability"
   ) +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "none"
+    legend.position = "none",
+    strip.text = element_text(size = 10, face = "bold"),
+    panel.grid.minor = element_blank()
   ) +
-  facet_wrap(~ Trajectory + Variable, ncol = 2, scales = "free_x")
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~ Trajectory, ncol = 2)
 
-# Print out the exact values with significance
-print(prob_results)
+# Combine plots using patchwork
+combined_plot <- edu_plot / isco_plot +
+  plot_layout(heights = c(1, 1)) +
+  plot_annotation(
+    title = "Predicted Probabilities by Poverty Trajectory Type and Socioeconomic Variables",
+    subtitle = "Black indicates statistically significant effects (p < 0.05)",
+    theme = theme(plot.title = element_text(size = 14, face = "bold"))
+  )
+
+# Display the combined plot
+combined_plot

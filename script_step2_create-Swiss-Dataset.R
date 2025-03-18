@@ -21,9 +21,14 @@ load(file=paste0(path, "WORKING-DATA/data_step1_harmonized-SHARE.Rdata"))
 
 # Subset  -----------------------------------------------------------------
 
+# based on country: aka just take Swiss respondents
 levels(as.factor(data$country))
 data <- data %>% filter(country=="20")
 
+# based on age
+2020-65 #take only people that aren't any younger than born 1955, because with this, there is a chance that they've at least
+# been observed twice in the dataset, then they were at least 65 in the before last wave 
+data <- data %>% filter(rabyear<=1955) 
 
 # Save --------------------------------------------------------------------
 

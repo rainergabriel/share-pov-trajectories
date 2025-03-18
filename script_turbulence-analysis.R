@@ -477,11 +477,11 @@ summary(tra.seq)
 # all sequences -----------------------------------------------------------
 
 
-measures <- seqindic(tra.seq, indic=c("turb","entr"))
+measures <- seqindic(tra.seq, indic=c("turb2n"))
 ids <- rownames(measures)
 measures <- cbind(ids, measures)
 measures <- as_tibble(measures)
-names(measures) <- c("mergeid", "entropy", "turbulence")
+names(measures) <- c("mergeid","turbulence")
 
 data <- left_join(data, measures, by="mergeid" )
 head(data$turbulence)
@@ -490,59 +490,6 @@ head(data$turbulence)
 
 # regression models  ------------------------------------------------------
 
-
-
-# Modellieren Part 1 -------------------------------------------------------------
-
-
-# --- entropy ---
-m1_vuln <- lm(entropy ~ eduyears,  data = data)
-m2_vuln <- glm(entropy ~ highest_lifetime_ISCO_88_recoded,  data = data)
-m3_vuln <- glm(entropy ~ eduyears + cohort + gender.rcd +
-                 valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w9,  data = data)
-m4_vuln <- glm(entropy ~ highest_lifetime_ISCO_88_recoded + cohort + gender.rcd +
-                 valid.information.wjoint.income.wealth.poverty.bn.w2 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w4 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w5 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w6 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w7 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w8 +
-                 valid.information.wjoint.income.wealth.poverty.bn.w9,  data = data)
-
-
-# Stargazer Table
-
-
-stargazer(
-  m1_vuln, m2_vuln, m3_vuln, m4_vuln,
-  type = "text", 
-  report = "vc*",
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.labels = "Entropy Index", 
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
-
-stargazer(
-  m1_vuln, m2_vuln, m3_vuln, m4_vuln,
-  type = "html", 
-  out = "stargazer_entropy-FINAL.html",   
-  report = "vc*",  
-  omit = c("valid*", "cohort*", "Constant", "gender*"),
-  single.row = TRUE,
-  p.auto = FALSE,
-  digits = 2,
-  dep.var.labels = "Entropy Index", 
-  covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
-)
 
 
 # --- turbulence ---
@@ -594,10 +541,7 @@ stargazer(
   covariate.labels = c("Years of education", "Highly skilled occupation (ref. medium)", "Low skilled occupation")
 )
 
-
-
-# displaying the results  -------------------------------------------------
-# Predicted Values for Linear Models ----------------------------------------
+# displaying the results - turbulence only -------------------------------------------------
 # Load required libraries
 library(ggplot2)
 library(dplyr)
@@ -606,20 +550,8 @@ library(kableExtra)
 
 # Function to calculate predicted values with confidence intervals
 calculate_predicted_values <- function() {
-  # Specify the models and variables of interest
+  # Specify the models and variables of interest - only turbulence
   models_info <- list(
-    list(
-      model = m3_vuln, 
-      outcome = "Entropy", 
-      variable = "eduyears",
-      display_name = "Years of education"
-    ),
-    list(
-      model = m4_vuln, 
-      outcome = "Entropy", 
-      variable = "highest_lifetime_ISCO_88_recoded",
-      display_name = "Highest lifetime ISCO-88"
-    ),
     list(
       model = m3_npno, 
       outcome = "Turbulence", 
@@ -781,7 +713,7 @@ ggplot(categorical_results, aes(
     guide = "none"
   ) +
   labs(
-    title = "Predicted Values by Outcome Measure and Variable",
+    title = "Predicted Values for Turbulence",
     subtitle = "Black indicates statistically significant effects (p < 0.05)",
     x = "Level",
     y = "Predicted Value"
@@ -791,56 +723,43 @@ ggplot(categorical_results, aes(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
   ) +
-  facet_wrap(~ Outcome + Variable, ncol = 2, scales = "free_y")
+  facet_wrap(~ Variable, scales = "free_y")
 
 # Save the plot
-ggsave("predicted_values_categorical.png", width = 12, height = 8)
+ggsave("predicted_values_categorical_turbulence.png", width = 10, height = 6)
 
 # Create visualization for continuous predictors (education years)
 continuous_results <- pred_results %>%
   filter(grepl("^\\d", Level))
-# Create visualization for continuous predictors (education years)
-continuous_results <- pred_results %>%
-  filter(grepl("^\\d", Level))
 
-# Get p-values for adding to subtitle
-education_sig_entropy <- any(tidy(m3_vuln) %>% filter(term == "eduyears") %>% pull(p.value) < 0.05)
+# Get p-value for education effect on turbulence
 education_sig_turbulence <- any(tidy(m3_npno) %>% filter(term == "eduyears") %>% pull(p.value) < 0.05)
 
 # Create subtitle with significance information
 education_subtitle <- paste0(
-  "Education effect on Entropy: ", ifelse(education_sig_entropy, "significant", "not significant"),
-  " | Education effect on Turbulence: ", ifelse(education_sig_turbulence, "significant", "not significant"),
+  "Education effect on Turbulence: ", 
+  ifelse(education_sig_turbulence, "significant", "not significant"),
   " (p < 0.05)"
 )
 
-# Create the plot for continuous predictors
+# Create the plot for continuous predictors (education years)
 ggplot(continuous_results, aes(
   x = as.numeric(Level), 
-  y = PredictedValue, 
-  color = Outcome,
-  group = Outcome
+  y = PredictedValue
 )) +
-  geom_line(size = 1) +
-  geom_ribbon(aes(ymin = CI_Lower, ymax = CI_Upper, fill = Outcome), alpha = 0.2) +
-  geom_point(size = 3) +
-  scale_color_manual(
-    values = c("Entropy" = "black", "Turbulence" = "darkblue")
-  ) +
-  scale_fill_manual(
-    values = c("Entropy" = "black", "Turbulence" = "darkblue")
-  ) +
+  geom_line(size = 1, color = "darkblue") +
+  geom_ribbon(aes(ymin = CI_Lower, ymax = CI_Upper), alpha = 0.2, fill = "darkblue") +
+  geom_point(size = 3, color = "darkblue") +
   labs(
-    title = "Predicted Values by Years of Education",
+    title = "Predicted Turbulence by Years of Education",
     subtitle = education_subtitle,
     x = "Years of Education",
-    y = "Predicted Value"
+    y = "Predicted Turbulence"
   ) +
-  theme_minimal() +
-  facet_wrap(~ Outcome, ncol = 2, scales = "free_y")
+  theme_minimal()
 
 # Save the plot
-ggsave("predicted_values_education.png", width = 10, height = 6)
+ggsave("predicted_values_education_turbulence.png", width = 8, height = 6)
 
 # Print out the exact values with significance
 print(pred_results)
@@ -848,18 +767,72 @@ print(pred_results)
 # Create a formatted table of the results
 library(kableExtra)
 pred_results %>%
-  arrange(Outcome, Variable, Level) %>%
+  arrange(Variable, Level) %>%
   mutate(
     PredictedValue = round(PredictedValue, 2),
     CI = paste0("[", round(CI_Lower, 2), ", ", round(CI_Upper, 2), "]"),
     PredictedValue = ifelse(Significant, paste0("**", PredictedValue, "**"), as.character(PredictedValue))
   ) %>%
-  select(Outcome, Variable, Level, PredictedValue, CI) %>%
+  select(Variable, Level, PredictedValue, CI) %>%
   kable(
     format = "html", 
-    caption = "Predicted Values by Outcome Measure and Variable",
-    col.names = c("Outcome", "Predictor Variable", "Level", "Predicted Value", "95% Confidence Interval")
+    caption = "Predicted Turbulence Values by Variable",
+    col.names = c("Predictor Variable", "Level", "Predicted Value", "95% Confidence Interval")
   ) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
   footnote(general = "** = p < 0.05", general_title = "Note: ") %>%
-  save_kable("predicted_values_table.html")
+  save_kable("predicted_values_turbulence_table.html")
+
+
+# Add this code to your existing script after the education years visualization
+
+# Your code already creates pred_results which contains both education and ISCO-88 results
+# We just need to filter and plot the ISCO-88 results specifically
+
+# Extract only ISCO-88 results
+isco_results <- pred_results %>%
+  filter(Variable == "Highest lifetime ISCO-88")
+
+# Get p-values for ISCO-88 effect on turbulence
+isco_terms <- tidy(m4_npno) %>% 
+  filter(grepl("^highest_lifetime_ISCO_88_recoded", term))
+isco_sig <- any(isco_terms$p.value < 0.05)
+
+# Create subtitle with significance information
+isco_subtitle <- paste0(
+  "Occupation effect on Turbulence: ", 
+  ifelse(isco_sig, "significant", "not significant"),
+  " (p < 0.05)"
+)
+
+# Create the plot specifically for ISCO-88 categories
+# No value labels above bars and no error bars
+ggplot(isco_results, aes(
+  x = Level, 
+  y = PredictedValue, 
+  fill = Significant
+)) +
+  geom_bar(
+    stat = "identity", 
+    position = position_dodge(width = 0.9), 
+    width = 0.7
+  ) +
+  scale_fill_manual(
+    values = c("TRUE" = "black", "FALSE" = "gray80"),
+    guide = "none"
+  ) +
+  labs(
+    title = "Predicted Turbulence by Occupational Status",
+    subtitle = isco_subtitle,
+    x = "Occupational Status",
+    y = "Predicted Turbulence"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  )
+
+# Save the ISCO-88 plot
+ggsave("predicted_values_isco_turbulence.png", width = 8, height = 6)
+
